@@ -1,11 +1,15 @@
 export type Lang = "ar" | "en";
 export type Theme = "light" | "dark" | "system";
+export type Provider = "claude" | "gemini";
 export type ModelId = "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5";
 export type OutputLang = "auto" | "ar" | "en";
 
 export interface Settings {
-  apiKey: string;
-  model: ModelId;
+  provider: Provider;
+  apiKey: string; // Claude
+  model: ModelId; // Claude
+  geminiKey: string;
+  geminiModel: string;
   lang: Lang;
   theme: Theme;
   outputLang: OutputLang;

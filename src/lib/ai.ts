@@ -1,36 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlockParam, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import { AiError, materialTextBlock, systemPrompt } from "./ai-common";
+import * as gemini from "./gemini";
 import { getSettings } from "./store";
 import type { ChatMsg, Material, ModelId } from "./types";
+
+export { AiError, type AiErrorCode } from "./ai-common";
 
 export const MODELS: { id: ModelId; tier: "best" | "balanced" | "cheap" }[] = [
   { id: "claude-opus-5-5", tier: "best" },
   { id: "claude-sonnet-5-5", tier: "balanced" },
   { id: "claude-haiku-5-5", tier: "cheap" },
 ];
-
-export type AiErrorCode =
-  | "no-key"
-  | "auth"
-  | "permission"
-  | "credits"
-  | "rate"
-  | "overloaded"
-  | "network"
-  | "refusal"
-  | "truncated"
-  | "bad-output"
-  | "aborted"
-  | "unknown";
-
-export class AiError extends Error {
-  constructor(
-    public code: AiErrorCode,
-    message: string = code,
-  ) {
-    super(message);
-  }
-}
 
 function client() {
   const { apiKey } = getSettings();
@@ -46,25 +27,6 @@ function modelParams(model: ModelId) {
   return { ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };
 }
 
-function languageRule(material?: Material) {
-  const { outputLang, lang } = getSettings();
-  if (outputLang === "ar") return "Always answer in Arabic (Modern Standard Arabic, clear and student-friendly).";
-  if (outputLang === "en") return "Always answer in English.";
-  return material
-    ? "Answer in the same language as the study material. If the material mixes languages, use the dominant one; keep technical terms in their original language when helpful."
-    : `Answer in ${lang === "ar" ? "Arabic" : "English"}.`;
-}
-
-function systemPrompt(material?: Material) {
-  return [
-    "You are Zakerly, a warm, expert study tutor helping a student master their study material.",
-    "Base everything on the provided material. If something isn't covered by it, say so briefly before adding general knowledge.",
-    "Be accurate, well-organised and encouraging. Use Markdown headings, bullet lists, bold key ideas, and tables when they help.",
-    "When the material is images of book pages, read them carefully (including handwriting, tables, and diagrams).",
-    languageRule(material),
-  ].join("\n");
-}
-
 function materialBlocks(m: Material): BetaContentBlockParam[] {
   const blocks: BetaContentBlockParam[] = [];
   if (m.images?.length) {
@@ -74,7 +36,7 @@ function materialBlocks(m: Material): BetaContentBlockParam[] {
     });
   }
   if (m.text) {
-    blocks.push({ type: "text", text: `<study_material title="${m.title.replace(/"/g, "'")}">\n${m.text}\n</study_material>` });
+    blocks.push({ type: "text", text: materialTextBlock(m) });
   }
   // Cache the material so every further tool on it is cheaper and faster.
   const last = blocks[blocks.length - 1] as { cache_control?: { type: "ephemeral" } };
@@ -120,8 +82,12 @@ export interface StreamOpts {
   signal?: AbortSignal;
 }
 
-/** Streams a Markdown answer; resolves with the full text. */
-export async function streamText({ material, task, history, onText, signal }: StreamOpts): Promise<string> {
+/** Streams a Markdown answer from the student's chosen provider; resolves with the full text. */
+export function streamText(opts: StreamOpts): Promise<string> {
+  return getSettings().provider === "gemini" ? gemini.streamText(opts) : claudeStreamText(opts);
+}
+
+async function claudeStreamText({ material, task, history, onText, signal }: StreamOpts): Promise<string> {
   try {
     const { model } = getSettings();
     const stream = client().beta.messages.stream(
@@ -154,7 +120,11 @@ export interface JsonOpts {
 }
 
 /** Runs a task whose answer must match `schema` (structured outputs). */
-export async function runJson<T>({ material, task, schema, signal }: JsonOpts): Promise<T> {
+export function runJson<T>(opts: JsonOpts): Promise<T> {
+  return getSettings().provider === "gemini" ? gemini.runJson<T>(opts) : claudeRunJson<T>(opts);
+}
+
+async function claudeRunJson<T>({ material, task, schema, signal }: JsonOpts): Promise<T> {
   try {
     const { model } = getSettings();
     const params = modelParams(model);
@@ -182,8 +152,8 @@ export async function runJson<T>({ material, task, schema, signal }: JsonOpts): 
   }
 }
 
-/** Cheap call used by Settings to check the key works. */
-export async function testKey(): Promise<void> {
+/** Cheap call used by Settings to check the Claude key works. */
+export async function testClaudeKey(): Promise<void> {
   try {
     await client().messages.create({
       model: "claude-haiku-5-5",

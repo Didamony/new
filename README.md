@@ -10,7 +10,11 @@
 
 كل دفعة بتضيف 30 يوم. ولو الطالب جدّد بدري، الشهر الجديد بيتحسب بعد اللي فاضل له، فمش بيخسر أيام. قبل نهاية الاشتراك بـ 5 أيام بيظهرله تنبيه يجدّد. (التجديد يدوي، يعني مفيش خصم تلقائي من الكارت.)
 
-> تكلفة الـ AI على الطالب نفسه (بيحط مفتاح Claude بتاعه من الإعدادات، والمفتاح بيفضل على جهازه بس).
+> تكلفة الـ AI على الطالب نفسه. بيختار من الإعدادات **Claude** أو **Gemini** ويحط مفتاحه، والمفتاح بيفضل على جهازه بس.
+> - **Claude:** مفتاح من [console.anthropic.com](https://console.anthropic.com) برصيد مدفوع.
+> - **Gemini:** مفتاح من [aistudio.google.com](https://aistudio.google.com/apikey)، وفيه باقة مجانية بحدود يومية. اشتراك Gemini بتاع الجامعة مش مفتاح API ومينفعش.
+>
+> نموذج Gemini بيتختار تلقائياً من النماذج المتاحة لمفتاح الطالب، فمفيش حاجة هتبوظ لما جوجل تغيّر أسماء النماذج.
 
 ---
 
@@ -92,7 +96,8 @@ update public.profiles set is_admin = true where email = 'your@email.com';
 ## البنية
 
 ```
-src/lib/ai.ts         طلبات Claude (streaming + structured outputs)
+src/lib/ai.ts         طلبات Claude + اختيار المزوّد
+src/lib/gemini.ts     طلبات Gemini
 src/lib/account.ts    الحساب والفترة المجانية والدفع وصفحة صاحب التطبيق
 src/lib/ingest.ts     PDF (pdf.js) والصور
 src/views/            الشاشات
