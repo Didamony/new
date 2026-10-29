@@ -88,6 +88,24 @@ export function KeySetup() {
         </li>
       </ol>
       <ErrorBox error={state.error} />
+
+      <details className="setup-help">
+        <summary>{t("help_toggle")}</summary>
+        <ol className="setup-guide">
+          {(["help_s1", "help_s2", "help_s3", "help_s4", "help_s5", "help_s6"] as const).map((k) => (
+            <li key={k}>{t(k)}</li>
+          ))}
+        </ol>
+        <b className="small">{t("faq_title")}</b>
+        <div className="setup-faq">
+          {([1, 2, 3, 4, 5] as const).map((n) => (
+            <details key={n}>
+              <summary>{t(`faq_q${n}`)}</summary>
+              <p className="small muted">{t(`faq_a${n}`)}</p>
+            </details>
+          ))}
+        </div>
+      </details>
       <div className="small muted">
         {t("setup_private")}{" "}
         <button className="link-btn" onClick={() => go("/settings")}>
