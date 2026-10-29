@@ -4,6 +4,7 @@ import { go } from "../components/ui";
 import { num, useT, type TKey } from "../lib/i18n";
 import { useAccount } from "../lib/account";
 import { KeySetup, useNeedsKey } from "../components/KeySetup";
+import { InstallCard } from "../components/InstallCard";
 import { activeProvider } from "../lib/ai";
 import { dayKey, getStats, listCards, listMaterials, streakOf, useLive, useSettings } from "../lib/store";
 import logo from "../assets/logo.svg";
@@ -45,6 +46,10 @@ export default function Home({ due }: { due: number }) {
         <button className="icon-btn" aria-label={t("nav_settings")} onClick={() => go("/settings")}>
           <Settings size={19} />
         </button>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <InstallCard />
       </div>
 
       <section className="hero">
