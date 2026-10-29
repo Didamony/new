@@ -98,6 +98,7 @@ update public.profiles set is_admin = true where email = 'your@email.com';
 1. في GitHub: **Settings → Pages → Source = GitHub Actions**.
 2. **Settings → Secrets and variables → Actions**: ضيف `VITE_SUPABASE_URL` و `VITE_SUPABASE_ANON_KEY`.
 3. أي push على `main` بينشر التطبيق تلقائياً (`.github/workflows/deploy.yml`).
+   - **لحد ما تضيف secrets بتوع Supabase:** بيتنشر كنسخة معاينة، ردودها أمثلة جاهزة ومفيهاش حسابات ولا دفع. أول ما تضيفهم، النشر الجاي بيبقى التطبيق الحقيقي.
 4. الطالب يفتح الرابط ويختار «إضافة إلى الشاشة الرئيسية» / «تثبيت».
 
 ---
