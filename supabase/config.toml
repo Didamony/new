@@ -1,0 +1,4 @@
+# Only the settings this project needs; `supabase init` would add the rest.
+[functions.paymob-webhook]
+# Paymob can't send a Supabase JWT; the request is authenticated by its HMAC instead.
+verify_jwt = false

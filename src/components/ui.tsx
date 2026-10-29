@@ -17,7 +17,8 @@ export function useRoute() {
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
-  return hash.split("/").filter(Boolean);
+  // payment redirects may append "?query" after the hash route
+  return hash.split("?")[0].split("/").filter(Boolean);
 }
 
 export function go(path: string) {

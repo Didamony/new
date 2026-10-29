@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { BookOpen, Home as HomeIcon, Layers, Plus, Settings as SettingsIcon, Timer } from "lucide-react";
+import { BookOpen, Crown, Home as HomeIcon, Layers, Plus, RefreshCw, Settings as SettingsIcon, Timer } from "lucide-react";
 import { go, ToastHost, useRoute } from "./components/ui";
 import { useT } from "./lib/i18n";
+import { refreshAccess, useAccount } from "./lib/account";
 import { listCards, useLive, useSettings } from "./lib/store";
 import { isDue } from "./lib/srs";
 import Home from "./views/Home";
@@ -11,6 +12,10 @@ import MaterialView from "./views/MaterialView";
 import Review from "./views/Review";
 import Focus from "./views/Focus";
 import Settings from "./views/Settings";
+import Auth from "./views/Auth";
+import Paywall from "./views/Paywall";
+import Paid from "./views/Paid";
+import Owner from "./views/Owner";
 
 function useThemeAndDirection() {
   const { theme, lang } = useSettings();
@@ -38,6 +43,30 @@ export default function App() {
   const route = useRoute();
   const section = route[0] ?? "";
   const due = useLive(async () => (await listCards()).filter(isDue).length, ["cards"]) ?? 0;
+  const { status } = useAccount();
+
+  // Access gate: sign in first, then free trial, then lifetime purchase.
+  if (status.kind === "loading") {
+    return (
+      <div className="gate">
+        <span className="spinner" style={{ width: 36, height: 36, color: "var(--primary)" }} />
+      </div>
+    );
+  }
+  if (status.kind === "error") {
+    return (
+      <div className="gate">
+        <div className="gate-card card empty">
+          <p>{t("access_error")}</p>
+          <button className="btn primary" onClick={() => refreshAccess()}>
+            <RefreshCw size={16} /> {t("refresh")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (status.kind === "anon") return <Auth />;
+  if (status.kind === "expired" && section !== "paid") return <Paywall blocking />;
 
   let view;
   switch (section) {
@@ -59,6 +88,15 @@ export default function App() {
     case "settings":
       view = <Settings />;
       break;
+    case "upgrade":
+      view = <Paywall blocking={false} />;
+      break;
+    case "paid":
+      view = <Paid />;
+      break;
+    case "owner":
+      view = <Owner />;
+      break;
     default:
       view = <Home due={due} />;
   }
@@ -69,6 +107,7 @@ export default function App() {
     { key: "review", icon: Layers, label: t("nav_review"), count: due },
     { key: "focus", icon: Timer, label: t("nav_focus") },
     { key: "settings", icon: SettingsIcon, label: t("nav_settings") },
+    ...(status.kind === "admin" ? [{ key: "owner", icon: Crown, label: t("owner_page") }] : []),
   ];
   const active = section === "m" ? "library" : section;
 

@@ -1763,3 +1763,120 @@ a {
   }
 }
 [dir="rtl"] { --flip: -1; }
+
+/* ---------------- access gate & paywall ---------------- */
+
+.gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  width: 100%;
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 26px 22px;
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+  animation: rise 0.35s ease both;
+}
+
+.code-input {
+  font-size: 26px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-weight: 700;
+}
+
+.paywall-badge {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: var(--grad);
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  margin: 0 auto 14px;
+  box-shadow: 0 14px 30px rgba(109, 94, 252, 0.35);
+}
+
+.price {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+
+.price b {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.price span {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.perks {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perks li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14.5px;
+}
+
+.perks li > span {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: var(--success-soft);
+  color: var(--success);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.trial-banner {
+  width: 100%;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: start;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--warm) 35%, transparent);
+  background: var(--warm-soft);
+  color: var(--text);
+}
+
+.trial-banner > svg:first-child {
+  color: var(--warm);
+  flex-shrink: 0;
+}
+
+.trial-banner b {
+  display: block;
+}
+
+.trial-banner .small {
+  color: var(--muted);
+}

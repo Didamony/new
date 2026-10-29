@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, Camera, Clock, FileText, Flame, Image as ImageIcon, Layers, Library, Quote, Settings, Sparkles, Timer, Type } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Crown, Clock, FileText, Flame, Image as ImageIcon, Layers, Library, Quote, Settings, Sparkles, Timer, Type } from "lucide-react";
 import { MaterialCard } from "../components/MaterialCard";
 import { go } from "../components/ui";
 import { num, useT, type TKey } from "../lib/i18n";
+import { useAccount } from "../lib/account";
 import { dayKey, getStats, listCards, listMaterials, streakOf, useLive, useSettings } from "../lib/store";
 
 export const SOURCES = [
@@ -17,6 +18,7 @@ export default function Home({ due }: { due: number }) {
   const materials = useLive(listMaterials, ["materials"]);
   const stats = useLive(getStats, ["stats"]);
   const cards = useLive(listCards, ["cards"]) ?? [];
+  const { status, access } = useAccount();
 
   const hour = new Date().getHours();
   const greet = t(hour < 15 && hour >= 4 ? "greet_morning" : "greet_evening");
@@ -67,6 +69,17 @@ export default function Home({ due }: { due: number }) {
           <span>{t(quoteKey)}</span>
         </div>
       </section>
+
+      {status.kind === "trial" && (
+        <button className="trial-banner" onClick={() => go("/upgrade")}>
+          <Crown size={20} />
+          <span className="grow">
+            <b>{status.daysLeft > 1 ? t("trial_left", { n: num(status.daysLeft, lang) }) : t("trial_left_hours", { n: num(status.hoursLeft, lang) })}</b>
+            <span className="small">{t("upgrade_price", { p: num(access?.price_egp ?? 100, lang) })}</span>
+          </span>
+          <Arrow size={18} />
+        </button>
+      )}
 
       <div className="stats">
         <Stat icon={Flame} tone="tone-warm" value={num(streak, lang)} label={t("streak")} />

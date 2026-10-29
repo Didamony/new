@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Check, Download, ExternalLink, Eye, EyeOff, KeyRound, Monitor, Moon, Sun } from "lucide-react";
-import { ErrorBox, Segmented } from "../components/ui";
+import { Check, Crown, Download, LogOut, UserRound, ExternalLink, Eye, EyeOff, KeyRound, Monitor, Moon, Sun } from "lucide-react";
+import { ErrorBox, go, Segmented } from "../components/ui";
+import { billingEnabled, signOut, useAccount } from "../lib/account";
 import { MODELS, testKey } from "../lib/ai";
-import { useT } from "../lib/i18n";
+import { num, useT } from "../lib/i18n";
 import { updateSettings, useSettings } from "../lib/store";
 import type { Lang, OutputLang, Theme } from "../lib/types";
 
@@ -19,8 +20,9 @@ window.addEventListener("beforeinstallprompt", (e) => {
 const MODEL_NAMES = { "claude-opus-5-5": "Claude Opus 5.5", "claude-sonnet-5-5": "Claude Sonnet 5.5", "claude-haiku-5-5": "Claude Haiku 5.5" };
 
 export default function Settings() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const s = useSettings();
+  const account = useAccount();
   const [key, setKey] = useState(s.apiKey);
   const [show, setShow] = useState(false);
   const [test, setTest] = useState<{ state: "idle" | "busy" | "ok"; error?: unknown }>({ state: "idle" });
@@ -56,6 +58,43 @@ export default function Settings() {
       <h1 className="h1" style={{ marginBottom: 18 }}>
         {t("settings_title")}
       </h1>
+
+      {billingEnabled && account.session && (
+        <section className="card" style={{ marginBottom: 14 }}>
+          <h2 className="h2 row">
+            <UserRound size={19} style={{ color: "var(--primary)" }} /> {t("account")}
+          </h2>
+          <div className="setting">
+            <div className="row between wrap">
+              <span className="ltr">{account.session.user.email}</span>
+              <span className={"chip " + (account.status.kind === "trial" ? "tone-warm" : "tone-accent")}>
+                {account.status.kind === "admin"
+                  ? t("plan_admin")
+                  : account.status.kind === "lifetime"
+                    ? t("plan_lifetime")
+                    : account.status.kind === "trial"
+                      ? `${t("plan_trial")} · ${num(account.status.daysLeft, lang)}`
+                      : t("st_expired")}
+              </span>
+            </div>
+            <div className="row wrap">
+              {account.status.kind === "trial" && (
+                <button className="btn primary sm" onClick={() => go("/upgrade")}>
+                  <Crown size={15} /> {t("upgrade_price", { p: num(account.access?.price_egp ?? 100, lang) })}
+                </button>
+              )}
+              {account.status.kind === "admin" && (
+                <button className="btn sm" onClick={() => go("/owner")}>
+                  <Crown size={15} /> {t("owner_page")}
+                </button>
+              )}
+              <button className="btn ghost sm" onClick={() => signOut()}>
+                <LogOut size={15} /> {t("sign_out")}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="card" style={{ marginBottom: 14 }}>
         <h2 className="h2 row">
