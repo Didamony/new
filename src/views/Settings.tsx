@@ -1,35 +1,19 @@
-import { useEffect, useState } from "react";
-import { Crown, Download, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
+import { Crown, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
 import { go, Segmented } from "../components/ui";
 import { billingEnabled, signOut, useAccount } from "../lib/account";
 import AiSettings from "./AiSettings";
+import { InstallCard } from "../components/InstallCard";
 import { formatDate, num, useT } from "../lib/i18n";
 import { updateSettings, useSettings } from "../lib/store";
 import type { Lang, Theme } from "../lib/types";
 
-interface InstallPrompt extends Event {
-  prompt: () => Promise<void>;
-}
-
-let deferredInstall: InstallPrompt | null = null;
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredInstall = e as InstallPrompt;
-});
 
 
 export default function Settings() {
   const { t, lang } = useT();
   const s = useSettings();
   const account = useAccount();
-  const [canInstall, setCanInstall] = useState(!!deferredInstall);
-  const standalone = matchMedia("(display-mode: standalone)").matches;
 
-  useEffect(() => {
-    const on = () => setCanInstall(true);
-    window.addEventListener("beforeinstallprompt", on);
-    return () => window.removeEventListener("beforeinstallprompt", on);
-  }, []);
 
 
   return (
@@ -121,26 +105,9 @@ export default function Settings() {
         <NumberSetting label={t("break_len")} value={s.breakMinutes} min={1} max={60} onChange={(v) => updateSettings({ breakMinutes: v })} />
       </section>
 
-      {!standalone && (
-        <section className="card" style={{ marginBottom: 14 }}>
-          <h2 className="h2 row">
-            <Download size={19} style={{ color: "var(--accent)" }} /> {t("install_app")}
-          </h2>
-          <p className="small muted">{t("install_hint")}</p>
-          {canInstall && (
-            <button
-              className="btn primary"
-              onClick={async () => {
-                await deferredInstall?.prompt();
-                deferredInstall = null;
-                setCanInstall(false);
-              }}
-            >
-              <Download size={16} /> {t("install")}
-            </button>
-          )}
-        </section>
-      )}
+      <div style={{ marginBottom: 14 }}>
+        <InstallCard always />
+      </div>
 
       <section className="card">
         <h2 className="h2">{t("data_section")}</h2>
