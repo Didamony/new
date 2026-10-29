@@ -3,7 +3,7 @@ import { Check, Crown, Download, LogOut, UserRound, ExternalLink, Eye, EyeOff, K
 import { ErrorBox, go, Segmented } from "../components/ui";
 import { billingEnabled, signOut, useAccount } from "../lib/account";
 import { MODELS, testKey } from "../lib/ai";
-import { num, useT } from "../lib/i18n";
+import { formatDate, num, useT } from "../lib/i18n";
 import { updateSettings, useSettings } from "../lib/store";
 import type { Lang, OutputLang, Theme } from "../lib/types";
 
@@ -67,20 +67,20 @@ export default function Settings() {
           <div className="setting">
             <div className="row between wrap">
               <span className="ltr">{account.session.user.email}</span>
-              <span className={"chip " + (account.status.kind === "trial" ? "tone-warm" : "tone-accent")}>
+              <span className={"chip " + (account.status.kind === "trial" ? "tone-warm" : account.status.kind === "expired" ? "tone-danger" : "tone-accent")}>
                 {account.status.kind === "admin"
                   ? t("plan_admin")
-                  : account.status.kind === "lifetime"
-                    ? t("plan_lifetime")
+                  : account.status.kind === "active"
+                    ? `${t("plan_active")} · ${t("until", { d: formatDate(account.status.until, lang) })}`
                     : account.status.kind === "trial"
                       ? `${t("plan_trial")} · ${num(account.status.daysLeft, lang)}`
                       : t("st_expired")}
               </span>
             </div>
             <div className="row wrap">
-              {account.status.kind === "trial" && (
+              {(account.status.kind === "trial" || account.status.kind === "active") && (
                 <button className="btn primary sm" onClick={() => go("/upgrade")}>
-                  <Crown size={15} /> {t("upgrade_price", { p: num(account.access?.price_egp ?? 100, lang) })}
+                  <Crown size={15} /> {account.status.kind === "active" ? t("renew") : t("upgrade_price", { p: num(account.access?.price_egp ?? 20, lang) })}
                 </button>
               )}
               {account.status.kind === "admin" && (

@@ -12,10 +12,11 @@ export const supabase = billingEnabled ? createClient(url!, anonKey!, { auth: { 
 export interface Access {
   now: string;
   trial_ends_at: string;
-  is_lifetime: boolean;
+  paid_until: string | null;
   is_admin: boolean;
   price_egp: number;
   trial_days: number;
+  period_days: number;
 }
 
 export type Status =
@@ -23,8 +24,8 @@ export type Status =
   | { kind: "free" } // billing not configured
   | { kind: "anon" }
   | { kind: "trial"; daysLeft: number; hoursLeft: number }
-  | { kind: "expired" }
-  | { kind: "lifetime" }
+  | { kind: "active"; daysLeft: number; until: number }
+  | { kind: "expired"; wasSubscribed: boolean }
   | { kind: "admin" }
   | { kind: "error" };
 
@@ -45,10 +46,12 @@ function setState(patch: Partial<State>) {
 
 function statusFrom(access: Access, skewMs: number): Status {
   if (access.is_admin) return { kind: "admin" };
-  if (access.is_lifetime) return { kind: "lifetime" };
   // server time now ≈ local time + skew measured when the access was fetched
-  const left = new Date(access.trial_ends_at).getTime() - (Date.now() + skewMs);
-  if (left <= 0) return { kind: "expired" };
+  const now = Date.now() + skewMs;
+  const until = access.paid_until ? new Date(access.paid_until).getTime() : 0;
+  if (until > now) return { kind: "active", daysLeft: Math.ceil((until - now) / 86400000), until };
+  const left = new Date(access.trial_ends_at).getTime() - now;
+  if (left <= 0) return { kind: "expired", wasSubscribed: until > 0 };
   return { kind: "trial", daysLeft: Math.ceil(left / 86400000), hoursLeft: Math.ceil(left / 3600000) };
 }
 
@@ -144,10 +147,25 @@ export async function signOut() {
 
 /* ---------------- payment ---------------- */
 
+const BEFORE_KEY = "zakerly.paidUntilBefore";
+
+/** The plan's end date when checkout started, so the return page can tell when the payment landed. */
+export function paidUntilBeforeCheckout() {
+  try {
+    return localStorage.getItem(BEFORE_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function startCheckout() {
-  const { data, error } = await supabase!.functions.invoke<{ url?: string; already?: boolean }>("create-payment", { body: {} });
+  try {
+    localStorage.setItem(BEFORE_KEY, state.access?.paid_until ?? "");
+  } catch {
+    /* storage unavailable */
+  }
+  const { data, error } = await supabase!.functions.invoke<{ url?: string }>("create-payment", { body: {} });
   if (error) throw error;
-  if (data?.already) return refreshAccess();
   if (data?.url) location.href = data.url;
   else throw new Error("checkout");
 }
@@ -157,7 +175,8 @@ export async function startCheckout() {
 export interface AdminStats {
   users: number;
   in_trial: number;
-  paid: number;
+  active: number;
+  revenue_month_egp: number;
   revenue_egp: number;
 }
 
@@ -166,7 +185,7 @@ export interface UserRow {
   email: string | null;
   created_at: string;
   trial_ends_at: string;
-  is_lifetime: boolean;
+  paid_until: string | null;
   is_admin: boolean;
 }
 
@@ -177,15 +196,21 @@ export async function adminStats() {
 }
 
 export async function adminUsers(search: string) {
-  let q = supabase!.from("profiles").select("user_id,email,created_at,trial_ends_at,is_lifetime,is_admin").order("created_at", { ascending: false }).limit(100);
+  let q = supabase!.from("profiles").select("user_id,email,created_at,trial_ends_at,paid_until,is_admin").order("created_at", { ascending: false }).limit(100);
   if (search.trim()) q = q.ilike("email", `%${search.trim()}%`);
   const { data, error } = await q;
   if (error) throw error;
   return data as UserRow[];
 }
 
-export async function adminSetLifetime(userId: string, value: boolean) {
-  const { error } = await supabase!.rpc("admin_set_lifetime", { target: userId, value });
+/** Adds one subscription period by hand (e.g. paid in cash or by InstaPay). */
+export async function adminGrantPeriod(userId: string) {
+  const { error } = await supabase!.rpc("admin_grant_period", { target: userId });
+  if (error) throw error;
+}
+
+export async function adminCancel(userId: string) {
+  const { error } = await supabase!.rpc("admin_cancel_subscription", { target: userId });
   if (error) throw error;
 }
 

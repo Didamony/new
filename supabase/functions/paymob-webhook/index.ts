@@ -1,4 +1,4 @@
-// Paymob "transaction processed" callback. Verifies the HMAC, then unlocks lifetime access.
+// Paymob "transaction processed" callback. Verifies the HMAC, then extends the subscription.
 import { adminClient, env, json } from "../_shared.ts";
 
 // Field order is fixed by Paymob's HMAC spec for transaction callbacks.
@@ -79,11 +79,21 @@ Deno.serve(async (req) => {
     return json({ ok: true, ignored: true });
   }
 
-  const now = new Date().toISOString();
-  await db
+  // Flip pending -> paid atomically so a retried callback can't extend twice.
+  const { data: claimed } = await db
     .from("payments")
-    .update({ status: "paid", paid_at: now, paymob_order_id: orderId, paymob_transaction_id: pick(obj, "id") })
-    .eq("id", payment.id);
-  await db.from("profiles").update({ is_lifetime: true, paid_at: now }).eq("user_id", payment.user_id);
+    .update({ status: "paid", paid_at: new Date().toISOString(), paymob_order_id: orderId, paymob_transaction_id: pick(obj, "id") })
+    .eq("id", payment.id)
+    .neq("status", "paid")
+    .select("id");
+  if (!claimed?.length) return json({ ok: true });
+
+  const { error } = await db.rpc("extend_subscription", { target: payment.user_id, days: payment.period_days });
+  if (error) {
+    console.error("extend failed", payment.id, error);
+    // release the claim so Paymob's retry can complete it
+    await db.from("payments").update({ status: "pending" }).eq("id", payment.id);
+    return json({ error: "server" }, 500);
+  }
   return json({ ok: true });
 });

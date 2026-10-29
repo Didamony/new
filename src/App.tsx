@@ -45,7 +45,7 @@ export default function App() {
   const due = useLive(async () => (await listCards()).filter(isDue).length, ["cards"]) ?? 0;
   const { status } = useAccount();
 
-  // Access gate: sign in first, then free trial, then lifetime purchase.
+  // Access gate: sign in first, then free trial, then the monthly subscription.
   if (status.kind === "loading") {
     return (
       <div className="gate">

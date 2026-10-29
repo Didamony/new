@@ -1,10 +1,11 @@
--- Zakerly accounts, free trial, lifetime purchase and owner-controlled pricing.
+-- Zakerly accounts, free trial, monthly subscription and owner-controlled pricing.
 
 -- Global settings the owner edits from the in-app owner page (single row).
 create table public.app_settings (
   id int primary key default 1 check (id = 1),
-  price_egp int not null default 100 check (price_egp >= 0),
+  price_egp int not null default 20 check (price_egp >= 0),
   trial_days int not null default 3 check (trial_days >= 0),
+  period_days int not null default 30 check (period_days > 0),
   updated_at timestamptz not null default now()
 );
 insert into public.app_settings (id) values (1);
@@ -14,8 +15,7 @@ create table public.profiles (
   email text,
   created_at timestamptz not null default now(),
   trial_ends_at timestamptz not null,
-  is_lifetime boolean not null default false,
-  paid_at timestamptz,
+  paid_until timestamptz,
   is_admin boolean not null default false
 );
 
@@ -23,6 +23,7 @@ create table public.payments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   amount_egp int not null,
+  period_days int not null,
   status text not null default 'pending' check (status in ('pending', 'paid', 'failed', 'manual')),
   paymob_order_id text,
   paymob_transaction_id text,
@@ -49,19 +50,38 @@ language sql stable security definer set search_path = public as $$
   select coalesce((select is_admin from public.profiles where user_id = auth.uid()), false);
 $$;
 
+-- Adds `days` to the subscription. Paying early stacks on top of the remaining
+-- paid time or free trial, so the student never loses days they already had.
+create function public.extend_subscription(target uuid, days int) returns timestamptz
+language sql security definer set search_path = public as $$
+  update public.profiles
+  set paid_until = greatest(coalesce(paid_until, now()), trial_ends_at, now()) + make_interval(days => days)
+  where user_id = target
+  returning paid_until;
+$$;
+-- Only the payment webhook (service role) may call it directly.
+revoke execute on function public.extend_subscription(uuid, int) from public, anon, authenticated;
+
 -- Owner actions --------------------------------------------------------------
 
--- Unlock (or revoke) lifetime access by hand, e.g. after a cash/InstaPay payment.
-create function public.admin_set_lifetime(target uuid, value boolean) returns void
+-- Add one period by hand, e.g. after a cash/InstaPay payment.
+create function public.admin_grant_period(target uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare s public.app_settings;
+begin
+  if not public.is_admin() then raise exception 'not allowed'; end if;
+  select * into s from public.app_settings where id = 1;
+  perform public.extend_subscription(target, s.period_days);
+  insert into public.payments (user_id, amount_egp, period_days, status, paid_at)
+  values (target, s.price_egp, s.period_days, 'manual', now());
+end;
+$$;
+
+create function public.admin_cancel_subscription(target uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin() then raise exception 'not allowed'; end if;
-  update public.profiles set is_lifetime = value, paid_at = case when value then coalesce(paid_at, now()) else null end
-  where user_id = target;
-  if value then
-    insert into public.payments (user_id, amount_egp, status, paid_at)
-    values (target, (select price_egp from public.app_settings where id = 1), 'manual', now());
-  end if;
+  update public.profiles set paid_until = null where user_id = target;
 end;
 $$;
 
@@ -71,11 +91,30 @@ begin
   if not public.is_admin() then raise exception 'not allowed'; end if;
   return json_build_object(
     'users', (select count(*) from public.profiles),
-    'in_trial', (select count(*) from public.profiles where not is_lifetime and trial_ends_at > now()),
-    'paid', (select count(*) from public.profiles where is_lifetime),
+    'in_trial', (select count(*) from public.profiles where coalesce(paid_until, '-infinity') <= now() and trial_ends_at > now()),
+    'active', (select count(*) from public.profiles where paid_until > now()),
+    'revenue_month_egp', (select coalesce(sum(amount_egp), 0) from public.payments
+                          where status in ('paid', 'manual') and paid_at >= date_trunc('month', now())),
     'revenue_egp', (select coalesce(sum(amount_egp), 0) from public.payments where status in ('paid', 'manual'))
   );
 end;
+$$;
+
+-- Everything the app needs to decide access, using the server clock
+-- (so changing the device date can't extend the trial or the subscription).
+create function public.my_access() returns json
+language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'now', now(),
+    'trial_ends_at', p.trial_ends_at,
+    'paid_until', p.paid_until,
+    'is_admin', p.is_admin,
+    'price_egp', s.price_egp,
+    'trial_days', s.trial_days,
+    'period_days', s.period_days
+  )
+  from public.profiles p, public.app_settings s
+  where p.user_id = auth.uid() and s.id = 1;
 $$;
 
 -- Row level security ---------------------------------------------------------
@@ -92,19 +131,3 @@ create policy "own profile" on public.profiles for select using (user_id = auth.
 
 create policy "own payments" on public.payments for select using (user_id = auth.uid() or public.is_admin());
 -- Payments are written only by the edge functions (service role bypasses RLS).
-
--- Everything the app needs to decide access, using the server clock
--- (so changing the device date can't extend the trial).
-create function public.my_access() returns json
-language sql stable security definer set search_path = public as $$
-  select json_build_object(
-    'now', now(),
-    'trial_ends_at', p.trial_ends_at,
-    'is_lifetime', p.is_lifetime,
-    'is_admin', p.is_admin,
-    'price_egp', s.price_egp,
-    'trial_days', s.trial_days
-  )
-  from public.profiles p, public.app_settings s
-  where p.user_id = auth.uid() and s.id = 1;
-$$;

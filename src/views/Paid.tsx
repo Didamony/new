@@ -1,15 +1,16 @@
 import { useEffect } from "react";
 import { PartyPopper, RefreshCw } from "lucide-react";
 import { go } from "../components/ui";
-import { refreshAccess, useAccount, useRefreshOnMount } from "../lib/account";
-import { useT } from "../lib/i18n";
+import { paidUntilBeforeCheckout, refreshAccess, useAccount, useRefreshOnMount } from "../lib/account";
+import { formatDate, useT } from "../lib/i18n";
 
 /** Paymob sends the student back here after checkout. */
 export default function Paid() {
-  const { t } = useT();
-  const { status } = useAccount();
+  const { t, lang } = useT();
+  const { status, access } = useAccount();
   useRefreshOnMount();
-  const ok = status.kind === "lifetime" || status.kind === "admin";
+  // done once the subscription end date has moved past where it was before checkout
+  const ok = status.kind === "admin" || (status.kind === "active" && access?.paid_until !== paidUntilBeforeCheckout());
 
   // the webhook usually lands a few seconds after the redirect
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function Paid() {
             <h1 className="h2" style={{ marginTop: 14 }}>
               {t("paid_ok")}
             </h1>
+            {status.kind === "active" && <p className="muted">{t("paid_until", { d: formatDate(status.until, lang) })}</p>}
             <button className="btn primary lg" style={{ marginTop: 16 }} onClick={() => go("/")}>
               {t("continue")}
             </button>

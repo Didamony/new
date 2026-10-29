@@ -70,12 +70,18 @@ export default function Home({ due }: { due: number }) {
         </div>
       </section>
 
-      {status.kind === "trial" && (
+      {(status.kind === "trial" || (status.kind === "active" && status.daysLeft <= 5)) && (
         <button className="trial-banner" onClick={() => go("/upgrade")}>
           <Crown size={20} />
           <span className="grow">
-            <b>{status.daysLeft > 1 ? t("trial_left", { n: num(status.daysLeft, lang) }) : t("trial_left_hours", { n: num(status.hoursLeft, lang) })}</b>
-            <span className="small">{t("upgrade_price", { p: num(access?.price_egp ?? 100, lang) })}</span>
+            <b>
+              {status.kind === "active"
+                ? t("sub_left", { n: num(status.daysLeft, lang) })
+                : status.daysLeft > 1
+                  ? t("trial_left", { n: num(status.daysLeft, lang) })
+                  : t("trial_left_hours", { n: num(status.hoursLeft, lang) })}
+            </b>
+            <span className="small">{status.kind === "active" ? t("renew") : t("upgrade_price", { p: num(access?.price_egp ?? 20, lang) })}</span>
           </span>
           <Arrow size={18} />
         </button>

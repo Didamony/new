@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Banknote, Clock, Save, Search, Users } from "lucide-react";
+import { BadgeCheck, Banknote, CalendarPlus, Clock, Save, Search, Users, XCircle } from "lucide-react";
 import { toast } from "../components/ui";
-import { adminSaveSettings, adminSetLifetime, adminStats, adminUsers, useAccount, type AdminStats, type UserRow } from "../lib/account";
+import { adminCancel, adminGrantPeriod, adminSaveSettings, adminStats, adminUsers, useAccount, type AdminStats, type UserRow } from "../lib/account";
 import { formatDate, num, useT } from "../lib/i18n";
 
 export default function Owner() {
   const { t, lang } = useT();
   const { access, status } = useAccount();
-  const [price, setPrice] = useState(access?.price_egp ?? 100);
+  const [price, setPrice] = useState(access?.price_egp ?? 20);
   const [trial, setTrial] = useState(access?.trial_days ?? 3);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -59,10 +59,10 @@ export default function Owner() {
     }
   }
 
-  async function toggle(u: UserRow) {
-    if (!confirm(u.is_lifetime ? t("confirm_revoke") : t("confirm_grant"))) return;
+  async function act(u: UserRow, kind: "grant" | "cancel") {
+    if (!confirm(kind === "grant" ? t("confirm_grant") : t("confirm_revoke"))) return;
     try {
-      await adminSetLifetime(u.user_id, !u.is_lifetime);
+      await (kind === "grant" ? adminGrantPeriod(u.user_id) : adminCancel(u.user_id));
       await load();
     } catch {
       toast(t("err_unknown"));
@@ -81,8 +81,8 @@ export default function Owner() {
       <div className="stats">
         <Stat icon={Users} tone="tone-primary" value={num(stats?.users ?? 0, lang)} label={t("st_users")} />
         <Stat icon={Clock} tone="tone-warm" value={num(stats?.in_trial ?? 0, lang)} label={t("st_trial")} />
-        <Stat icon={BadgeCheck} tone="tone-accent" value={num(stats?.paid ?? 0, lang)} label={t("st_paid")} />
-        <Stat icon={Banknote} tone="tone-pink" value={num(stats?.revenue_egp ?? 0, lang)} label={t("st_revenue")} />
+        <Stat icon={BadgeCheck} tone="tone-accent" value={num(stats?.active ?? 0, lang)} label={t("st_paid")} />
+        <Stat icon={Banknote} tone="tone-pink" value={num(stats?.revenue_month_egp ?? 0, lang)} label={t("st_month_revenue")} />
       </div>
 
       <section className="card" style={{ marginTop: 16 }}>
@@ -106,6 +106,9 @@ export default function Owner() {
         <div className="small muted" style={{ marginTop: 8 }}>
           {t("trial_days_note")}
         </div>
+        <div className="small muted" style={{ marginTop: 4 }}>
+          {t("st_revenue")}: <b>{num(stats?.revenue_egp ?? 0, lang)}</b>
+        </div>
       </section>
 
       <div className="section-title">
@@ -117,7 +120,9 @@ export default function Owner() {
       </div>
       <div className="stack" style={{ gap: 8 }}>
         {users.map((u) => {
-          const inTrial = !u.is_lifetime && new Date(u.trial_ends_at).getTime() > now;
+          const until = u.paid_until ? new Date(u.paid_until).getTime() : 0;
+          const active = until > now;
+          const inTrial = !active && new Date(u.trial_ends_at).getTime() > now;
           return (
             <div key={u.user_id} className="card row wrap" style={{ padding: 12 }}>
               <div className="grow" style={{ minWidth: 180 }}>
@@ -128,13 +133,26 @@ export default function Owner() {
                   {t("joined")} {formatDate(new Date(u.created_at).getTime(), lang)}
                 </span>
               </div>
-              <span className={"chip " + (u.is_admin ? "tone-primary" : u.is_lifetime ? "tone-accent" : inTrial ? "tone-warm" : "tone-danger")}>
-                {u.is_admin ? t("plan_admin") : u.is_lifetime ? t("plan_lifetime") : inTrial ? t("plan_trial") : t("st_expired")}
+              <span className={"chip " + (u.is_admin ? "tone-primary" : active ? "tone-accent" : inTrial ? "tone-warm" : "tone-danger")}>
+                {u.is_admin
+                  ? t("plan_admin")
+                  : active
+                    ? `${t("plan_active")} · ${t("until", { d: formatDate(until, lang) })}`
+                    : inTrial
+                      ? t("plan_trial")
+                      : t("st_expired")}
               </span>
               {!u.is_admin && (
-                <button className={"btn sm " + (u.is_lifetime ? "danger" : "")} onClick={() => toggle(u)}>
-                  {u.is_lifetime ? t("revoke") : t("grant")}
-                </button>
+                <div className="row" style={{ gap: 6 }}>
+                  <button className="btn sm" onClick={() => act(u, "grant")}>
+                    <CalendarPlus size={15} /> {t("grant")}
+                  </button>
+                  {active && (
+                    <button className="btn sm danger" aria-label={t("revoke")} title={t("revoke")} onClick={() => act(u, "cancel")}>
+                      <XCircle size={15} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );

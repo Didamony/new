@@ -1,4 +1,4 @@
-// Starts a Paymob Unified Checkout for the lifetime plan and returns the checkout URL.
+// Starts a Paymob Unified Checkout for one subscription period and returns the checkout URL.
 // The price always comes from the database, never from the client.
 import { adminClient, cors, env, json, paymobBase, userFromRequest } from "../_shared.ts";
 
@@ -11,16 +11,14 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "unauthorized" }, 401);
 
     const db = adminClient();
-    const { data: profile } = await db.from("profiles").select("is_lifetime").eq("user_id", user.id).single();
-    if (profile?.is_lifetime) return json({ already: true });
-
-    const { data: settings, error: sErr } = await db.from("app_settings").select("price_egp").eq("id", 1).single();
+    const { data: settings, error: sErr } = await db.from("app_settings").select("price_egp,period_days").eq("id", 1).single();
     if (sErr || !settings) throw sErr ?? new Error("settings missing");
     const price: number = settings.price_egp;
 
+    // Price and period are fixed on the payment row now, so a later price change can't affect it.
     const { data: payment, error: pErr } = await db
       .from("payments")
-      .insert({ user_id: user.id, amount_egp: price, status: "pending" })
+      .insert({ user_id: user.id, amount_egp: price, period_days: settings.period_days, status: "pending" })
       .select("id")
       .single();
     if (pErr || !payment) throw pErr ?? new Error("payment insert failed");
@@ -40,7 +38,7 @@ Deno.serve(async (req) => {
           .split(",")
           .map((s) => Number(s.trim()))
           .filter(Boolean),
-        items: [{ name: "Zakerly lifetime", amount: cents, description: "Zakerly lifetime access", quantity: 1 }],
+        items: [{ name: "Zakerly monthly", amount: cents, description: `Zakerly subscription (${settings.period_days} days)`, quantity: 1 }],
         billing_data: {
           first_name: name,
           last_name: "Zakerly",
