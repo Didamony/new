@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // the preview build runs inside a frame where service workers aren't allowed
+      disable: process.env.VITE_DEMO === "1",
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {

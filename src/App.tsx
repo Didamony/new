@@ -3,6 +3,7 @@ import { BookOpen, Crown, Home as HomeIcon, Layers, Plus, RefreshCw, Settings as
 import { go, ToastHost, useRoute } from "./components/ui";
 import { useT } from "./lib/i18n";
 import { refreshAccess, useAccount } from "./lib/account";
+import { DEMO, demoLangNote } from "./lib/demo";
 import { listCards, useLive, useSettings } from "./lib/store";
 import { isDue } from "./lib/srs";
 import Home from "./views/Home";
@@ -133,7 +134,10 @@ export default function App() {
         ))}
       </aside>
 
-      <main className="main">{view}</main>
+      <main className="main">
+        {DEMO && <div className="demo-note no-print">{demoLangNote()}</div>}
+        {view}
+      </main>
 
       <nav className="bottom-nav" aria-label="main">
         {links.slice(0, 2).map(({ key, ...l }) => (

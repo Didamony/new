@@ -1880,3 +1880,14 @@ a {
 .trial-banner .small {
   color: var(--muted);
 }
+
+.demo-note {
+  max-width: 980px;
+  margin: 0 auto 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--warm-soft);
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+}

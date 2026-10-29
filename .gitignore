@@ -6,3 +6,4 @@ dev-dist
 tsconfig.tsbuildinfo
 .env
 .env.local
+dist-demo
