@@ -113,6 +113,9 @@ update public.profiles set is_admin = true where email = 'your@email.com';
 ## البنية
 
 ```
+index.html            الموقع التعريفي (الصفحة الرئيسية للينك)
+app/index.html        التطبيق نفسه (على /app/)
+src/site/             تصميم الموقع وتبديل اللغة
 src/lib/ai.ts         طلبات Claude + اختيار المزوّد
 src/lib/gemini.ts     طلبات Gemini بمفتاح الطالب
 src/lib/freeai.ts     الـ AI المجاني عن طريق ai-proxy

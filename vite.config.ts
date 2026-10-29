@@ -1,16 +1,35 @@
-import { defineConfig } from "vite";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 const demo = process.env.VITE_DEMO === "1";
 
+/** The app page lives in /app/, but the web manifest sits at the site root. */
+const appManifestLink: Plugin = {
+  name: "app-manifest-link",
+  apply: "build",
+  writeBundle(options) {
+    const file = resolve(options.dir ?? "dist", "app/index.html");
+    if (!existsSync(file)) return;
+    writeFileSync(file, readFileSync(file, "utf8").replace('href="./manifest.webmanifest"', 'href="../manifest.webmanifest"'));
+  },
+};
+
 export default defineConfig({
   base: "./",
   // The preview build is published as one page; its sandboxed frame can't load extra script files.
-  build: demo ? { rolldownOptions: { output: { codeSplitting: false } } } : {},
+  // Two pages: the website at the root and the app under /app/. The demo build is the app alone.
+  build: demo
+    ? { rolldownOptions: { input: resolve(__dirname, "app/index.html"), output: { codeSplitting: false } } }
+    : { rolldownOptions: { input: { site: resolve(__dirname, "index.html"), app: resolve(__dirname, "app/index.html") } } },
   plugins: [
     react(),
+    appManifestLink,
     VitePWA({
+      // registered by hand in main.tsx: the worker lives at the site root, one level above the app
+      injectRegister: false,
       // the preview build runs inside a frame where service workers aren't allowed
       disable: demo,
       registerType: "autoUpdate",
@@ -21,7 +40,8 @@ export default defineConfig({
         description: "مساعدك الذكي للمذاكرة: لخّص، اسأل، واختبر نفسك من أي كتاب أو صورة.",
         lang: "ar",
         dir: "rtl",
-        start_url: "./",
+        // an installed app opens straight into the app, not the website
+        start_url: "./app/",
         scope: "./",
         display: "standalone",
         orientation: "portrait",
@@ -34,6 +54,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // each page is precached on its own; don't serve the website for app URLs offline
+        navigateFallback: null,
         globPatterns: ["**/*.{js,css,html,svg,png,mjs,woff2}"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
