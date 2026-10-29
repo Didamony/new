@@ -17,6 +17,7 @@ import Auth from "./views/Auth";
 import Paywall from "./views/Paywall";
 import Paid from "./views/Paid";
 import Owner from "./views/Owner";
+import logo from "./assets/logo.svg";
 
 function useThemeAndDirection() {
   const { theme, lang } = useSettings();
@@ -116,7 +117,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <img src="./icon.svg" alt="" />
+          <img src={logo} alt="" />
           <div>
             <b>{t("appName")}</b>
             <small>{t("tagline")}</small>

@@ -2,13 +2,17 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+const demo = process.env.VITE_DEMO === "1";
+
 export default defineConfig({
   base: "./",
+  // The preview build is published as one page; its sandboxed frame can't load extra script files.
+  build: demo ? { rolldownOptions: { output: { codeSplitting: false } } } : {},
   plugins: [
     react(),
     VitePWA({
       // the preview build runs inside a frame where service workers aren't allowed
-      disable: process.env.VITE_DEMO === "1",
+      disable: demo,
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {

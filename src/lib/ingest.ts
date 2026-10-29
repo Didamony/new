@@ -3,8 +3,14 @@ import type { ImagePart } from "./types";
 
 /** pdf.js is large, so it is only loaded when a PDF is actually opened. */
 async function loadPdfjs() {
-  const [lib, worker] = await Promise.all([import("pdfjs-dist"), import("pdfjs-dist/build/pdf.worker.min.mjs?url")]);
-  lib.GlobalWorkerOptions.workerSrc = worker.default;
+  const lib = await import("pdfjs-dist");
+  if (import.meta.env.VITE_DEMO === "1") {
+    // the one-page preview build ships the worker inline and runs it from a blob URL
+    const code = (await import("pdfjs-dist/build/pdf.worker.min.mjs?raw")).default;
+    lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
+  } else {
+    lib.GlobalWorkerOptions.workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+  }
   return lib;
 }
 

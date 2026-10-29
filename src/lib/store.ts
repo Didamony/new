@@ -1,4 +1,4 @@
-import { createStore, get, set, del, values } from "idb-keyval";
+import { createStore, del, get, set, values, type UseStore } from "idb-keyval";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Flashcard, Material, Settings, Stats } from "./types";
 
@@ -78,26 +78,56 @@ export function useSettings(): Settings {
 
 /* ---------------- IndexedDB collections ---------------- */
 
-const materialsDb = createStore("zakerly-materials", "materials");
-const cardsDb = createStore("zakerly-cards", "cards");
-const metaDb = createStore("zakerly-meta", "meta");
+/**
+ * IndexedDB collection that falls back to memory when the browser blocks
+ * storage (private windows, sandboxed previews), so the app still runs.
+ */
+function collection(dbName: string, storeName: string) {
+  let idb: UseStore | null = null;
+  let memory: Map<string, unknown> | null = null;
+  try {
+    idb = createStore(dbName, storeName);
+  } catch {
+    memory = new Map();
+  }
+  async function run<T>(useIdb: (store: UseStore) => Promise<T>, useMemory: (m: Map<string, unknown>) => T): Promise<T> {
+    if (!memory) {
+      try {
+        return await useIdb(idb!);
+      } catch {
+        memory = new Map();
+      }
+    }
+    return useMemory(memory);
+  }
+  return {
+    get: <T>(key: string) => run((st) => get<T>(key, st), (m) => m.get(key) as T | undefined),
+    set: (key: string, value: unknown) => run((st) => set(key, value, st), (m) => void m.set(key, value)),
+    del: (key: string) => run((st) => del(key, st), (m) => void m.delete(key)),
+    values: <T>() => run((st) => values<T>(st), (m) => [...m.values()] as T[]),
+  };
+}
+
+const materialsDb = collection("zakerly-materials", "materials");
+const cardsDb = collection("zakerly-cards", "cards");
+const metaDb = collection("zakerly-meta", "meta");
 
 export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
 export async function listMaterials(): Promise<Material[]> {
-  const all = (await values<Material>(materialsDb)) ?? [];
+  const all = (await materialsDb.values<Material>()) ?? [];
   return all.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export async function getMaterial(id: string) {
-  return get<Material>(id, materialsDb);
+  return materialsDb.get<Material>(id);
 }
 
 export async function saveMaterial(m: Material) {
   m.updatedAt = Date.now();
-  await set(m.id, m, materialsDb);
+  await materialsDb.set(m.id, m);
   emit("materials");
 }
 
@@ -108,24 +138,24 @@ export async function patchMaterial(id: string, patch: Partial<Material>) {
 }
 
 export async function deleteMaterial(id: string) {
-  await del(id, materialsDb);
+  await materialsDb.del(id);
   const cards = await listCards();
-  await Promise.all(cards.filter((c) => c.materialId === id).map((c) => del(c.id, cardsDb)));
+  await Promise.all(cards.filter((c) => c.materialId === id).map((c) => cardsDb.del(c.id)));
   emit("materials");
   emit("cards");
 }
 
 export async function listCards(): Promise<Flashcard[]> {
-  return (await values<Flashcard>(cardsDb)) ?? [];
+  return (await cardsDb.values<Flashcard>()) ?? [];
 }
 
 export async function saveCards(cards: Flashcard[]) {
-  await Promise.all(cards.map((c) => set(c.id, c, cardsDb)));
+  await Promise.all(cards.map((c) => cardsDb.set(c.id, c)));
   emit("cards");
 }
 
 export async function deleteCard(id: string) {
-  await del(id, cardsDb);
+  await cardsDb.del(id);
   emit("cards");
 }
 
@@ -162,7 +192,7 @@ export function dayKey(d = new Date()) {
 }
 
 export async function getStats(): Promise<Stats> {
-  return { ...emptyStats, ...((await get<Stats>("stats", metaDb)) ?? {}) };
+  return { ...emptyStats, ...((await metaDb.get<Stats>("stats")) ?? {}) };
 }
 
 let statsQueue: Promise<unknown> = Promise.resolve();
@@ -174,7 +204,7 @@ export function bumpStats(fn: (s: Stats) => void) {
     const today = dayKey();
     if (!s.activeDays.includes(today)) s.activeDays = [...s.activeDays, today];
     fn(s);
-    await set("stats", s, metaDb);
+    await metaDb.set("stats", s);
     emit("stats");
   });
   return statsQueue;

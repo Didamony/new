@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
 import { sendCode, useAccount, verifyCode } from "../lib/account";
 import { num, useT } from "../lib/i18n";
 import { updateSettings, useSettings } from "../lib/store";
+import logo from "../assets/logo.svg";
 
 export default function Auth() {
   const { t, lang } = useT();
@@ -46,7 +47,7 @@ export default function Auth() {
     <div className="gate">
       <div className="gate-card card">
         <div className="row between">
-          <img src="./icon.svg" alt="" width={56} height={56} style={{ borderRadius: 17 }} />
+          <img src={logo} alt="" width={56} height={56} style={{ borderRadius: 17 }} />
           <button className="btn ghost sm" onClick={() => updateSettings({ lang: settings.lang === "ar" ? "en" : "ar" })}>
             {settings.lang === "ar" ? "English" : "العربية"}
           </button>

@@ -5,6 +5,7 @@ import { num, useT, type TKey } from "../lib/i18n";
 import { useAccount } from "../lib/account";
 import { activeProvider } from "../lib/ai";
 import { dayKey, getStats, listCards, listMaterials, streakOf, useLive, useSettings } from "../lib/store";
+import logo from "../assets/logo.svg";
 
 export const SOURCES = [
   { key: "pdf", icon: FileText, tone: "tone-primary", title: "src_pdf", sub: "src_pdf_sub" },
@@ -36,7 +37,7 @@ export default function Home({ due }: { due: number }) {
     <div className="page">
       <div className="row between" style={{ marginBottom: 16 }}>
         <div className="row">
-          <img src="./icon.svg" alt="" width={36} height={36} style={{ borderRadius: 11 }} />
+          <img src={logo} alt="" width={36} height={36} style={{ borderRadius: 11 }} />
           <b style={{ fontSize: 18 }}>{t("appName")}</b>
         </div>
         <button className="icon-btn" aria-label={t("nav_settings")} onClick={() => go("/settings")}>
