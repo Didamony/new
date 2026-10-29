@@ -1902,3 +1902,54 @@ a {
   font-size: 13px;
   font-weight: 600;
 }
+
+.setup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.setup-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--grad);
+  color: #fff;
+}
+
+.setup-steps {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.setup-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.setup-steps li::marker {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.setup-steps form {
+  width: 100%;
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+}

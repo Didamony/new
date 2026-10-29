@@ -24,16 +24,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Until the Supabase secrets are added, publish the demo build (sample answers, no accounts).
-      - name: Build
-        run: |
-          if [ -n "$VITE_SUPABASE_URL" ]; then
-            npm run build
-          else
-            echo "::notice::VITE_SUPABASE_URL is not set, deploying the demo build"
-            npx tsc -b
-            VITE_DEMO=1 npx vite build
-          fi
+      # Without the Supabase secrets the app runs without accounts, and each
+      # student uses their own free Gemini key (the app walks them through it).
+      - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
