@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Check, ExternalLink, Eye, EyeOff, KeyRound, RefreshCw } from "lucide-react";
 import { ErrorBox, Segmented } from "../components/ui";
-import { MODELS, testClaudeKey } from "../lib/ai";
+import { activeProvider, MODELS, testClaudeKey } from "../lib/ai";
+import { billingEnabled, useAccount } from "../lib/account";
 import { DEFAULT_GEMINI_MODEL, listModels, type GeminiModel } from "../lib/gemini";
-import { useT } from "../lib/i18n";
+import { num, useT } from "../lib/i18n";
 import { updateSettings, useSettings } from "../lib/store";
 import type { OutputLang, Provider } from "../lib/types";
 
@@ -12,12 +13,15 @@ const CLAUDE_NAMES = { "claude-opus-5-5": "Claude Opus 5.5", "claude-sonnet-5-5"
 type Test = { state: "idle" | "busy" | "ok"; error?: unknown };
 
 export default function AiSettings() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const s = useSettings();
+  const { access } = useAccount();
+  const provider = activeProvider();
+  const isFree = provider === "free";
   const [show, setShow] = useState(false);
   const [test, setTest] = useState<Test>({ state: "idle" });
   const [geminiModels, setGeminiModels] = useState<GeminiModel[] | null>(null);
-  const isGemini = s.provider === "gemini";
+  const isGemini = provider === "gemini";
   const key = isGemini ? s.geminiKey : s.apiKey;
 
   useEffect(() => setTest({ state: "idle" }), [s.provider]);
@@ -73,15 +77,38 @@ export default function AiSettings() {
           {t("provider")}
         </span>
         <Segmented<Provider>
-          value={s.provider}
+          value={provider}
           onChange={(v) => updateSettings({ provider: v })}
           options={[
-            { value: "claude", label: "Claude" },
-            { value: "gemini", label: "Gemini" },
+            ...(billingEnabled ? [{ value: "free" as const, label: t("prov_free") }] : []),
+            { value: "claude", label: t("prov_claude_own") },
+            { value: "gemini", label: t("prov_gemini_own") },
           ]}
         />
-        <div className="small muted">{isGemini ? t("gemini_note") : t("claude_note")}</div>
+        {!isFree && <div className="small muted">{isGemini ? t("gemini_note") : t("claude_note")}</div>}
       </div>
+
+      {isFree && (
+        <div className="setting">
+          <div className="alert ok">
+            <div className="stack" style={{ gap: 6 }}>
+              <span>{t("free_note", { limit: num(access?.free_daily_limit ?? 0, lang) })}</span>
+              {access && (
+                <b>
+                  {t("free_left", {
+                    n: num(Math.max(0, access.free_daily_limit - access.free_used_today), lang),
+                    limit: num(access.free_daily_limit, lang),
+                  })}
+                </b>
+              )}
+            </div>
+          </div>
+          <div className="small muted">{t("free_tip")}</div>
+        </div>
+      )}
+
+      {!isFree && (
+        <>
 
       <div className="setting">
         <label className="label" htmlFor="key" style={{ margin: 0 }}>
@@ -164,6 +191,9 @@ export default function AiSettings() {
           </div>
         )}
       </div>
+
+        </>
+      )}
 
       <div className="setting">
         <span className="label" style={{ margin: 0 }}>

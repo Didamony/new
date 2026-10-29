@@ -2,11 +2,19 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlockParam, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { AiError, materialTextBlock, systemPrompt } from "./ai-common";
 import { DEMO, demoJson, demoStream } from "./demo";
+import { billingEnabled } from "./account";
+import * as freeai from "./freeai";
 import * as gemini from "./gemini";
 import { getSettings } from "./store";
 import type { ChatMsg, Material, ModelId } from "./types";
 
 export { AiError, type AiErrorCode } from "./ai-common";
+
+/** The built-in free AI needs accounts (Supabase); without them, fall back to the student's own Gemini key. */
+export function activeProvider() {
+  const { provider } = getSettings();
+  return provider === "free" && !billingEnabled ? "gemini" : provider;
+}
 
 export const MODELS: { id: ModelId; tier: "best" | "balanced" | "cheap" }[] = [
   { id: "claude-opus-5-5", tier: "best" },
@@ -86,7 +94,8 @@ export interface StreamOpts {
 /** Streams a Markdown answer from the student's chosen provider; resolves with the full text. */
 export function streamText(opts: StreamOpts): Promise<string> {
   if (DEMO) return demoStream(opts).catch((e) => Promise.reject(e instanceof DOMException ? new AiError("aborted") : e));
-  return getSettings().provider === "gemini" ? gemini.streamText(opts) : claudeStreamText(opts);
+  const p = activeProvider();
+  return p === "free" ? freeai.streamText(opts) : p === "gemini" ? gemini.streamText(opts) : claudeStreamText(opts);
 }
 
 async function claudeStreamText({ material, task, history, onText, signal }: StreamOpts): Promise<string> {
@@ -124,7 +133,8 @@ export interface JsonOpts {
 /** Runs a task whose answer must match `schema` (structured outputs). */
 export function runJson<T>(opts: JsonOpts): Promise<T> {
   if (DEMO) return demoJson<T>(opts.schema, opts.signal).catch((e) => Promise.reject(e instanceof DOMException ? new AiError("aborted") : e));
-  return getSettings().provider === "gemini" ? gemini.runJson<T>(opts) : claudeRunJson<T>(opts);
+  const p = activeProvider();
+  return p === "free" ? freeai.runJson<T>(opts) : p === "gemini" ? gemini.runJson<T>(opts) : claudeRunJson<T>(opts);
 }
 
 async function claudeRunJson<T>({ material, task, schema, signal }: JsonOpts): Promise<T> {

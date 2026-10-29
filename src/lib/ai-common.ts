@@ -5,6 +5,7 @@ import type { Material } from "./types";
 
 export type AiErrorCode =
   | "no-key"
+  | "quota"
   | "auth"
   | "permission"
   | "credits"

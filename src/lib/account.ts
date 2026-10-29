@@ -17,6 +17,8 @@ export interface Access {
   price_egp: number;
   trial_days: number;
   period_days: number;
+  free_daily_limit: number;
+  free_used_today: number;
 }
 
 export type Status =
@@ -178,6 +180,8 @@ export interface AdminStats {
   active: number;
   revenue_month_egp: number;
   revenue_egp: number;
+  ai_requests_today: number;
+  ai_users_today: number;
 }
 
 export interface UserRow {
@@ -214,8 +218,21 @@ export async function adminCancel(userId: string) {
   if (error) throw error;
 }
 
-export async function adminSaveSettings(price_egp: number, trial_days: number) {
-  const { error } = await supabase!.from("app_settings").update({ price_egp, trial_days, updated_at: new Date().toISOString() }).eq("id", 1);
+export interface AppSettingsPatch {
+  price_egp: number;
+  trial_days: number;
+  free_daily_limit: number;
+  free_model: string;
+}
+
+export async function adminSaveSettings(patch: AppSettingsPatch) {
+  const { error } = await supabase!.from("app_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", 1);
   if (error) throw error;
   await refreshAccess();
+}
+
+export async function adminGetSettings() {
+  const { data, error } = await supabase!.from("app_settings").select("price_egp,trial_days,free_daily_limit,free_model").eq("id", 1).single();
+  if (error) throw error;
+  return data as AppSettingsPatch;
 }

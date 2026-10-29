@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Banknote, CalendarPlus, Clock, Save, Search, Users, XCircle } from "lucide-react";
+import { BadgeCheck, Banknote, CalendarPlus, Clock, Save, Search, Sparkles, UserCheck, Users, XCircle } from "lucide-react";
 import { toast } from "../components/ui";
-import { adminCancel, adminGrantPeriod, adminSaveSettings, adminStats, adminUsers, useAccount, type AdminStats, type UserRow } from "../lib/account";
+import { adminCancel, adminGetSettings, adminGrantPeriod, adminSaveSettings, adminStats, adminUsers, useAccount, type AdminStats, type AppSettingsPatch, type UserRow } from "../lib/account";
 import { formatDate, num, useT } from "../lib/i18n";
 
 export default function Owner() {
   const { t, lang } = useT();
-  const { access, status } = useAccount();
-  const [price, setPrice] = useState(access?.price_egp ?? 20);
-  const [trial, setTrial] = useState(access?.trial_days ?? 3);
+  const { status } = useAccount();
+  const [form, setForm] = useState<AppSettingsPatch>({ price_egp: 20, trial_days: 3, free_daily_limit: 25, free_model: "" });
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState("");
@@ -27,11 +26,11 @@ export default function Owner() {
   }
 
   useEffect(() => {
-    if (access) {
-      setPrice(access.price_egp);
-      setTrial(access.trial_days);
-    }
-  }, [access?.price_egp, access?.trial_days]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (status.kind === "admin") adminGetSettings().then(setForm, () => toast(t("err_unknown")));
+  }, [status.kind]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setNum = (k: "price_egp" | "trial_days" | "free_daily_limit") => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [k]: Math.max(0, Math.round(+e.target.value)) });
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -50,7 +49,7 @@ export default function Owner() {
   async function save() {
     setBusy(true);
     try {
-      await adminSaveSettings(price, trial);
+      await adminSaveSettings({ ...form, free_model: form.free_model.trim() });
       toast(t("saved"));
     } catch {
       toast(t("err_unknown"));
@@ -83,6 +82,8 @@ export default function Owner() {
         <Stat icon={Clock} tone="tone-warm" value={num(stats?.in_trial ?? 0, lang)} label={t("st_trial")} />
         <Stat icon={BadgeCheck} tone="tone-accent" value={num(stats?.active ?? 0, lang)} label={t("st_paid")} />
         <Stat icon={Banknote} tone="tone-pink" value={num(stats?.revenue_month_egp ?? 0, lang)} label={t("st_month_revenue")} />
+        <Stat icon={Sparkles} tone="tone-primary" value={num(stats?.ai_requests_today ?? 0, lang)} label={t("st_ai_today")} />
+        <Stat icon={UserCheck} tone="tone-accent" value={num(stats?.ai_users_today ?? 0, lang)} label={t("st_ai_users")} />
       </div>
 
       <section className="card" style={{ marginTop: 16 }}>
@@ -91,20 +92,32 @@ export default function Owner() {
             <label className="label" htmlFor="price">
               {t("price_egp")}
             </label>
-            <input id="price" className="input" type="number" min={0} style={{ maxWidth: 180 }} value={price} onChange={(e) => setPrice(Math.max(0, Math.round(+e.target.value)))} />
+            <input id="price" className="input" type="number" min={0} style={{ maxWidth: 180 }} value={form.price_egp} onChange={setNum("price_egp")} />
           </div>
           <div>
             <label className="label" htmlFor="trial">
               {t("trial_days")}
             </label>
-            <input id="trial" className="input" type="number" min={0} max={60} style={{ maxWidth: 140 }} value={trial} onChange={(e) => setTrial(Math.max(0, Math.round(+e.target.value)))} />
+            <input id="trial" className="input" type="number" min={0} max={60} style={{ maxWidth: 140 }} value={form.trial_days} onChange={setNum("trial_days")} />
+          </div>
+          <div>
+            <label className="label" htmlFor="limit">
+              {t("free_limit_label")}
+            </label>
+            <input id="limit" className="input" type="number" min={0} max={1000} style={{ maxWidth: 140 }} value={form.free_daily_limit} onChange={setNum("free_daily_limit")} />
+          </div>
+          <div>
+            <label className="label" htmlFor="fmodel">
+              {t("free_model_label")}
+            </label>
+            <input id="fmodel" className="input ltr" style={{ maxWidth: 220 }} placeholder="auto" value={form.free_model} onChange={(e) => setForm({ ...form, free_model: e.target.value })} />
           </div>
           <button className="btn primary" disabled={busy} onClick={save}>
             {busy ? <span className="spinner" /> : <Save size={16} />} {t("save")}
           </button>
         </div>
         <div className="small muted" style={{ marginTop: 8 }}>
-          {t("trial_days_note")}
+          {t("trial_days_note")} {t("free_model_hint")}
         </div>
         <div className="small muted" style={{ marginTop: 4 }}>
           {t("st_revenue")}: <b>{num(stats?.revenue_egp ?? 0, lang)}</b>

@@ -10,11 +10,11 @@
 
 كل دفعة بتضيف 30 يوم. ولو الطالب جدّد بدري، الشهر الجديد بيتحسب بعد اللي فاضل له، فمش بيخسر أيام. قبل نهاية الاشتراك بـ 5 أيام بيظهرله تنبيه يجدّد. (التجديد يدوي، يعني مفيش خصم تلقائي من الكارت.)
 
-> تكلفة الـ AI على الطالب نفسه. بيختار من الإعدادات **Claude** أو **Gemini** ويحط مفتاحه، والمفتاح بيفضل على جهازه بس.
-> - **Claude:** مفتاح من [console.anthropic.com](https://console.anthropic.com) برصيد مدفوع.
-> - **Gemini:** مفتاح من [aistudio.google.com](https://aistudio.google.com/apikey)، وفيه باقة مجانية بحدود يومية. اشتراك Gemini بتاع الجامعة مش مفتاح API ومينفعش.
->
-> نموذج Gemini بيتختار تلقائياً من النماذج المتاحة لمفتاح الطالب، فمفيش حاجة هتبوظ لما جوجل تغيّر أسماء النماذج.
+**الـ AI في التطبيق:**
+- **مجاني (جاهز) — الافتراضي:** التطبيق بيفتح على **Gemini** على طول من غير ما الطالب يحط أي مفتاح. الطلبات بتعدّي على سيرفرك (`ai-proxy`) وبتستخدم **مفتاحك إنت**، ولكل طالب **25 طلب في اليوم** (بتوقيت القاهرة). الأدمن يقدر يغيّر الحد ده من لوحة التحكم.
+- **مفتاح الطالب الخاص (من غير حد):** لو الطالب عايز استخدام أكتر، يختار من الإعدادات **Claude** (مفتاح من [console.anthropic.com](https://console.anthropic.com)) أو **Gemini** (مفتاح من [aistudio.google.com](https://aistudio.google.com/apikey)). طلباته في الحالة دي بتروح من جهازه للمزوّد على طول، ومش بتتحسب من حدّه ولا بتكلفك حاجة.
+
+اشتراك Gemini بتاع الجامعة مش مفتاح API ومينفعش هنا.
 
 ---
 
@@ -73,11 +73,27 @@ update public.profiles set is_admin = true where email = 'your@email.com';
      APP_URL=https://<username>.github.io/<repo>
    supabase functions deploy create-payment
    supabase functions deploy paymob-webhook --no-verify-jwt
+   supabase functions deploy ai-proxy
    ```
    الـ webhook عنوانه `https://<project-ref>.supabase.co/functions/v1/paymob-webhook`، وبيتبعت لـ Paymob تلقائياً مع كل عملية دفع.
 4. **جرّب الأول بوضع الاختبار (Test mode) في Paymob** واتأكد إن الاشتراك بيتفعّل لوحده بعد الدفع وإن تاريخ نهايته اتمدّ 30 يوم، قبل ما تشغّل الحساب الحقيقي.
 
-### 4) النشر على GitHub Pages
+### 4) الـ AI المجاني (Gemini بمفتاحك)
+
+1. اعمل مفتاح من [Google AI Studio](https://aistudio.google.com/apikey).
+2. حطه كـ secret وارفع الدالة:
+   ```bash
+   supabase secrets set GEMINI_API_KEY=...
+   supabase functions deploy ai-proxy
+   ```
+3. من لوحة التحكم تقدر تغيّر:
+   - **حد الطلبات اليومي** لكل طالب (الافتراضي 25).
+   - **نموذج Gemini**. لو سبته فاضي، الدالة بتختار أحدث نموذج Flash لوحدها.
+   - وكمان بتشوف عدد الطلبات المجانية النهارده، وعدد الطلبة اللي استخدموها.
+
+> **مهم:** الباقة المجانية من جوجل ليها حدود على **مشروعك كله** (عدد طلبات في الدقيقة وفي اليوم)، والحدود دي بتتقسم على كل الطلبة. ومع عدد كبير من الطلبة هتحتاج تفعّل الدفع (Billing) في Google Cloud. كمان جوجل ممكن تستخدم بيانات الباقة المجانية في تحسين منتجاتها، والباقة المدفوعة مش بتعمل كده. لو الطلب فشل من عند جوجل، الطالب بيرجعله طلبه ومش بيتحسب عليه.
+
+### 5) النشر على GitHub Pages
 
 1. في GitHub: **Settings → Pages → Source = GitHub Actions**.
 2. **Settings → Secrets and variables → Actions**: ضيف `VITE_SUPABASE_URL` و `VITE_SUPABASE_ANON_KEY`.
@@ -97,7 +113,8 @@ update public.profiles set is_admin = true where email = 'your@email.com';
 
 ```
 src/lib/ai.ts         طلبات Claude + اختيار المزوّد
-src/lib/gemini.ts     طلبات Gemini
+src/lib/gemini.ts     طلبات Gemini بمفتاح الطالب
+src/lib/freeai.ts     الـ AI المجاني عن طريق ai-proxy
 src/lib/account.ts    الحساب والفترة المجانية والدفع وصفحة صاحب التطبيق
 src/lib/ingest.ts     PDF (pdf.js) والصور
 src/views/            الشاشات

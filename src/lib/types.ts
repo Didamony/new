@@ -1,6 +1,7 @@
 export type Lang = "ar" | "en";
 export type Theme = "light" | "dark" | "system";
-export type Provider = "claude" | "gemini";
+/** "free" = built-in Gemini on the owner's key, with a daily limit per student. */
+export type Provider = "free" | "claude" | "gemini";
 export type ModelId = "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5";
 export type OutputLang = "auto" | "ar" | "en";
 

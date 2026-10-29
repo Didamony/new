@@ -5,7 +5,7 @@ import type { Flashcard, Material, Settings, Stats } from "./types";
 const SETTINGS_KEY = "zakerly.settings";
 
 export const defaultSettings: Settings = {
-  provider: "claude",
+  provider: "free",
   apiKey: "",
   model: "claude-opus-5-5",
   geminiKey: "",

@@ -114,7 +114,7 @@ export function ErrorBox({ error }: { error: unknown }) {
   const code = error instanceof AiError ? error.code : "unknown";
   if (code === "aborted") return null;
   const key = ("err_" + code.replace("-", "_")) as TKey;
-  const needsSettings = code === "no-key" || code === "auth" || code === "permission";
+  const needsSettings = code === "no-key" || code === "auth" || code === "permission" || code === "quota";
   const detail = error instanceof AiError && code === "unknown" && error.message !== "unknown" ? error.message : null;
   return (
     <div className="alert" role="alert">

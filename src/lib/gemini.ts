@@ -26,7 +26,7 @@ function materialParts(m: Material): Part[] {
   return parts;
 }
 
-function buildContents(material: Material | undefined, task: string, history: ChatMsg[] = []): Content[] {
+export function buildContents(material: Material | undefined, task: string, history: ChatMsg[] = []): Content[] {
   const first = material ? materialParts(material) : [];
   if (history.length === 0) return [{ role: "user", parts: [...first, { text: task }] }];
   const [head, ...rest] = history;
@@ -52,7 +52,7 @@ function mapError(e: unknown): AiError {
 }
 
 /** Throws the matching AiError when Gemini blocked or cut off the answer. */
-function checkFinish(last: GenerateContentResponse | undefined) {
+export function checkFinish(last: GenerateContentResponse | undefined) {
   if (last?.promptFeedback?.blockReason) throw new AiError("refusal");
   const reason = last?.candidates?.[0]?.finishReason;
   if (reason === "SAFETY" || reason === "PROHIBITED_CONTENT" || reason === "BLOCKLIST" || reason === "SPII") throw new AiError("refusal");
@@ -60,7 +60,7 @@ function checkFinish(last: GenerateContentResponse | undefined) {
 }
 
 /** Gemini's JSON-schema mode accepts a subset of JSON Schema; drop keywords it may reject. */
-function toGeminiSchema(schema: unknown): unknown {
+export function toGeminiSchema(schema: unknown): unknown {
   if (Array.isArray(schema)) return schema.map(toGeminiSchema);
   if (schema && typeof schema === "object") {
     const out: Record<string, unknown> = {};
