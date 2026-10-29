@@ -1902,3 +1902,104 @@ a {
   font-size: 13px;
   font-weight: 600;
 }
+
+.setup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.setup-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--grad);
+  color: #fff;
+}
+
+.setup-steps {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.setup-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.setup-steps li::marker {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.setup-steps form {
+  width: 100%;
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.setup-help {
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+}
+
+.setup-help > summary,
+.setup-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--primary);
+  list-style-position: inside;
+}
+
+.setup-guide {
+  margin: 12px 0 16px;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  line-height: 1.7;
+}
+
+.setup-guide li::marker {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.setup-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.setup-faq details {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.setup-faq summary {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.setup-faq p {
+  margin: 6px 0 0;
+}

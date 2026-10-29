@@ -3,6 +3,7 @@ import { MaterialCard } from "../components/MaterialCard";
 import { go } from "../components/ui";
 import { num, useT, type TKey } from "../lib/i18n";
 import { useAccount } from "../lib/account";
+import { KeySetup, useNeedsKey } from "../components/KeySetup";
 import { activeProvider } from "../lib/ai";
 import { dayKey, getStats, listCards, listMaterials, streakOf, useLive, useSettings } from "../lib/store";
 import logo from "../assets/logo.svg";
@@ -21,6 +22,7 @@ export default function Home({ due }: { due: number }) {
   const stats = useLive(getStats, ["stats"]);
   const cards = useLive(listCards, ["cards"]) ?? [];
   const { status, access } = useAccount();
+  const needsKey = useNeedsKey();
   const freeLeft = activeProvider() === "free" && access ? Math.max(0, access.free_daily_limit - access.free_used_today) : null;
 
   const hour = new Date().getHours();
@@ -94,6 +96,12 @@ export default function Home({ due }: { due: number }) {
         <button className="quota-chip" onClick={() => go("/settings")}>
           {t("quota_chip", { n: num(freeLeft, lang) })}
         </button>
+      )}
+
+      {needsKey && (
+        <div style={{ marginTop: 14 }}>
+          <KeySetup />
+        </div>
       )}
 
       <div className="stats">

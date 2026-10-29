@@ -3,6 +3,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { AlertTriangle, Settings as SettingsIcon } from "lucide-react";
 import { AiError } from "../lib/ai";
+import { KeySetup } from "./KeySetup";
 import { useT, type TKey } from "../lib/i18n";
 
 /* ---------------- routing ---------------- */
@@ -113,8 +114,10 @@ export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null;
   const code = error instanceof AiError ? error.code : "unknown";
   if (code === "aborted") return null;
+  // no key yet: show the setup steps instead of an error
+  if (code === "no-key") return <KeySetup />;
   const key = ("err_" + code.replace("-", "_")) as TKey;
-  const needsSettings = code === "no-key" || code === "auth" || code === "permission" || code === "quota";
+  const needsSettings = code === "auth" || code === "permission" || code === "quota";
   const detail = error instanceof AiError && code === "unknown" && error.message !== "unknown" ? error.message : null;
   return (
     <div className="alert" role="alert">
