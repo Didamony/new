@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#6d5efc" />
+    <meta name="theme-color" content="#07070f" />
+    <meta name="color-scheme" content="dark" />
     <title>ذاكرلي — ذاكر أذكى، مش أكتر</title>
     <meta name="description" content="صوّر صفحة من كتابك أو ارفع PDF، وذاكرلي يلخصهالك، ويطلعلك الأسئلة المتوقعة، ويختبرك. مجاني للطلبة، بالعربي والإنجليزي." />
     <meta property="og:title" content="ذاكرلي — مساعدك الذكي للمذاكرة" />
@@ -22,6 +23,7 @@
       (function () {
         var standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
         if (location.hash.indexOf("#/") === 0 || standalone) location.replace("./app/" + location.hash);
+        document.documentElement.classList.add("js"); // enables the scroll-in animations
         try {
           var s = JSON.parse(localStorage.getItem("zakerly.settings") || "{}");
           if (s.lang === "en") document.documentElement.dataset.lang = "en";
@@ -30,6 +32,8 @@
     </script>
   </head>
   <body>
+    <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+
     <header class="nav">
       <div class="wrap nav-row">
         <a class="brand" href="./">
@@ -37,13 +41,14 @@
           <b data-en="Zakerly">ذاكرلي</b>
         </a>
         <nav class="nav-links" aria-label="sections">
-          <a href="#features" data-en="Features">المميزات</a>
           <a href="#how" data-en="How it works">بيشتغل إزاي</a>
+          <a href="#features" data-en="Features">المميزات</a>
+          <a href="#gallery" data-en="Screens">من جوه التطبيق</a>
           <a href="#faq" data-en="FAQ">أسئلة</a>
         </nav>
         <div class="nav-actions">
           <button class="lang-btn" id="lang" type="button">English</button>
-          <a class="btn btn-primary btn-sm" href="./app/" data-en="Open the app">افتح التطبيق</a>
+          <a class="btn btn-primary btn-sm open-app" href="./app/" data-en="Get the app">نزّل التطبيق</a>
         </div>
       </div>
     </header>
@@ -52,20 +57,21 @@
       <section class="hero">
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <span class="pill" data-en="Free for students ✨">مجاني للطلبة ✨</span>
-            <h1 data-en="Study smarter, not longer.">ذاكر أذكى، <span class="grad-text">مش أكتر.</span></h1>
-            <p class="lead" data-en="Snap a page of your book, upload a PDF or paste any text. Zakerly summarises it, writes the questions likely to come up in your exam, and quizzes you until you know you've got it.">
+            <span class="pill enter" style="--d: 0ms" data-en="✨ Free for students">✨ مجاني للطلبة</span>
+            <h1 class="enter" style="--d: 80ms" data-en="Study smarter, not longer.">ذاكر أذكى، <span class="grad-text">مش أكتر.</span></h1>
+            <p class="lead enter" style="--d: 160ms" data-en="Snap a page of your book, upload a PDF or paste any text. Zakerly summarises it, writes the questions likely to come up in your exam, and quizzes you until you know you've got it.">
               صوّر صفحة من كتابك، أو ارفع ملف PDF، أو الصق أي نص… وذاكرلي يلخصهولك، ويطلعلك الأسئلة اللي ممكن تيجي في الامتحان، ويختبرك لحد ما تتأكد إنك فاهم.
             </p>
-            <div class="cta-row">
-              <a class="btn btn-primary btn-lg" href="./app/" data-en="Start now — it's free">ابدأ دلوقتي ببلاش</a>
-              <a class="btn btn-ghost btn-lg" href="#features" data-en="See what it does">شوف بيعمل إيه</a>
+            <div class="cta-row enter" style="--d: 240ms">
+              <a class="btn btn-primary btn-lg open-app" href="./app/" data-en="Get the app — free">نزّل التطبيق ببلاش</a>
+              <a class="btn btn-ghost btn-lg" href="#how" data-en="See how it works">شوف بيشتغل إزاي</a>
             </div>
-            <p class="small muted" data-en="Works on iPhone, Android and computers. No App Store needed.">بيشتغل على الآيفون والأندرويد والكمبيوتر، ومن غير App Store.</p>
+            <p class="small muted enter" style="--d: 320ms" data-en="iPhone · Android · Computer — no App Store needed.">آيفون · أندرويد · كمبيوتر — ومن غير App Store.</p>
           </div>
           <div class="hero-art" aria-hidden="true">
-            <div class="phone phone-back"><img src="./landing/quiz.jpg" alt="" loading="eager" /></div>
-            <div class="phone phone-front"><img src="./landing/home.jpg" alt="" loading="eager" /></div>
+            <div class="glow-ring"></div>
+            <div class="phone phone-back"><img src="./landing/quiz.jpg" alt="" /></div>
+            <div class="phone phone-front"><img src="./landing/home.jpg" alt="" /></div>
             <div class="float-chip chip-a" data-en="✓ Summary ready">✓ الملخص جاهز</div>
             <div class="float-chip chip-b" data-en="🎯 Score 92%">🎯 نتيجتك ٩٢٪</div>
           </div>
@@ -73,31 +79,32 @@
       </section>
 
       <section class="strip">
-        <div class="wrap strip-row">
-          <span data-en="📄 PDF">📄 PDF</span>
-          <span data-en="📷 Camera">📷 كاميرا</span>
-          <span data-en="🖼️ Photos">🖼️ صور</span>
-          <span data-en="✍️ Text">✍️ نص</span>
-          <span data-en="🌙 Dark mode">🌙 وضع ليلي</span>
-          <span data-en="🇪🇬 Arabic & English">🇪🇬 عربي وإنجليزي</span>
+        <div class="wrap strip-row reveal">
+          <span data-en="PDF">PDF</span><i></i>
+          <span data-en="Camera">كاميرا</span><i></i>
+          <span data-en="Photos">صور</span><i></i>
+          <span data-en="Text">نص</span><i></i>
+          <span data-en="Arabic & English">عربي وإنجليزي</span><i></i>
+          <span data-en="Dark mode">وضع ليلي</span>
         </div>
       </section>
 
       <section class="section" id="how">
         <div class="wrap">
-          <h2 class="section-title" data-en="Three steps, that's it">٣ خطوات وبس</h2>
+          <p class="eyebrow reveal" data-en="How it works">بيشتغل إزاي</p>
+          <h2 class="section-title reveal" data-en="Three steps, that's it">٣ خطوات وبس</h2>
           <div class="steps">
-            <article class="step">
+            <article class="step reveal" style="--d: 0ms">
               <span class="step-num">١</span>
               <h3 data-en="Bring your material">هات المادة</h3>
               <p data-en="Upload a PDF, snap a page with the camera, pick photos, or paste text. Scanned books work too.">ارفع PDF، أو صوّر صفحة بالكاميرا، أو اختار صور، أو الصق نص. حتى الكتب المتصوّرة بتشتغل.</p>
             </article>
-            <article class="step">
+            <article class="step reveal" style="--d: 120ms">
               <span class="step-num">٢</span>
               <h3 data-en="Pick what you need">اختار اللي محتاجه</h3>
               <p data-en="A summary, likely exam questions, a quiz, flashcards, a simpler explanation, or a mind map.">ملخص، أسئلة متوقعة، اختبار، بطاقات، شرح أبسط، أو خريطة ذهنية.</p>
             </article>
-            <article class="step">
+            <article class="step reveal" style="--d: 240ms">
               <span class="step-num">٣</span>
               <h3 data-en="Study and remember">ذاكر وافتكر</h3>
               <p data-en="Quiz yourself, and review flashcards right before you'd forget them.">اختبر نفسك، وراجع البطاقات في الوقت المناسب قبل ما تنساها.</p>
@@ -106,33 +113,40 @@
         </div>
       </section>
 
-      <section class="section alt" id="features">
+      <section class="section" id="features">
         <div class="wrap">
-          <h2 class="section-title" data-en="Everything you need to study">كل اللي محتاجه عشان تذاكر</h2>
+          <p class="eyebrow reveal" data-en="Features">المميزات</p>
+          <h2 class="section-title reveal" data-en="Everything you need to study">كل اللي محتاجه عشان تذاكر</h2>
           <div class="features">
-            <article class="feature"><span class="f-ic tone-1">📝</span><h3 data-en="Summaries">ملخصات</h3><p data-en="Brief, detailed, bullet points, or an exam-night sheet.">مختصر، مفصّل، نقاط، أو ورقة ليلة الامتحان.</p></article>
-            <article class="feature"><span class="f-ic tone-2">❓</span><h3 data-en="Likely exam questions">أسئلة متوقعة</h3><p data-en="The questions your teacher could ask, with model answers.">الأسئلة اللي ممكن تيجي في الامتحان، بالإجابات النموذجية.</p></article>
-            <article class="feature"><span class="f-ic tone-3">✅</span><h3 data-en="Quiz yourself">اختبر نفسك</h3><p data-en="Multiple choice with your score and why each answer is right.">اختيار من متعدد، بدرجتك وسبب كل إجابة صح.</p></article>
-            <article class="feature"><span class="f-ic tone-4">🃏</span><h3 data-en="Smart flashcards">بطاقات ذكية</h3><p data-en="They come back right before you'd forget them.">بترجعلك قبل ما تنسى، فتفتكر أكتر بمجهود أقل.</p></article>
-            <article class="feature"><span class="f-ic tone-2">💡</span><h3 data-en="Explain it simply">اشرحلي ببساطة</h3><p data-en="Everyday examples and analogies for hard ideas.">أمثلة من الحياة وتشبيهات للأفكار الصعبة.</p></article>
-            <article class="feature"><span class="f-ic tone-1">🧠</span><h3 data-en="Mind map">خريطة ذهنية</h3><p data-en="The whole lesson at a glance.">الدرس كله قدامك في صفحة واحدة.</p></article>
-            <article class="feature"><span class="f-ic tone-3">📖</span><h3 data-en="Key terms">المصطلحات</h3><p data-en="Every key term with a clear definition.">كل مصطلح مهم بتعريف واضح.</p></article>
-            <article class="feature"><span class="f-ic tone-4">💬</span><h3 data-en="Ask the lesson">اسأل عن الدرس</h3><p data-en="Chat and get answers from your own material.">اسأل أي سؤال والإجابة من المادة نفسها.</p></article>
+            <article class="feature reveal" style="--d: 0ms"><span class="f-ic tone-1">📝</span><h3 data-en="Summaries">ملخصات</h3><p data-en="Brief, detailed, bullet points, or an exam-night sheet.">مختصر، مفصّل، نقاط، أو ورقة ليلة الامتحان.</p></article>
+            <article class="feature reveal" style="--d: 70ms"><span class="f-ic tone-2">❓</span><h3 data-en="Likely exam questions">أسئلة متوقعة</h3><p data-en="The questions your teacher could ask, with model answers.">الأسئلة اللي ممكن تيجي في الامتحان، بالإجابات النموذجية.</p></article>
+            <article class="feature reveal" style="--d: 140ms"><span class="f-ic tone-3">✅</span><h3 data-en="Quiz yourself">اختبر نفسك</h3><p data-en="Multiple choice with your score and why each answer is right.">اختيار من متعدد، بدرجتك وسبب كل إجابة صح.</p></article>
+            <article class="feature reveal" style="--d: 210ms"><span class="f-ic tone-4">🃏</span><h3 data-en="Smart flashcards">بطاقات ذكية</h3><p data-en="They come back right before you'd forget them.">بترجعلك قبل ما تنسى، فتفتكر أكتر بمجهود أقل.</p></article>
+            <article class="feature reveal" style="--d: 0ms"><span class="f-ic tone-2">💡</span><h3 data-en="Explain it simply">اشرحلي ببساطة</h3><p data-en="Everyday examples and analogies for hard ideas.">أمثلة من الحياة وتشبيهات للأفكار الصعبة.</p></article>
+            <article class="feature reveal" style="--d: 70ms"><span class="f-ic tone-1">🧠</span><h3 data-en="Mind map">خريطة ذهنية</h3><p data-en="The whole lesson at a glance.">الدرس كله قدامك في صفحة واحدة.</p></article>
+            <article class="feature reveal" style="--d: 140ms"><span class="f-ic tone-3">📖</span><h3 data-en="Key terms">المصطلحات</h3><p data-en="Every key term with a clear definition.">كل مصطلح مهم بتعريف واضح.</p></article>
+            <article class="feature reveal" style="--d: 210ms"><span class="f-ic tone-4">💬</span><h3 data-en="Ask the lesson">اسأل عن الدرس</h3><p data-en="Chat and get answers from your own material.">اسأل أي سؤال والإجابة من المادة نفسها.</p></article>
           </div>
-          <p class="extras" data-en="Plus: focus sessions (Pomodoro), a daily goal, a study streak, and read-aloud.">وكمان: جلسات تركيز (بومودورو)، هدف يومي، أيام متتالية، وقراءة الملخص بصوت.</p>
+          <p class="extras reveal" data-en="Plus: focus sessions (Pomodoro), a daily goal, a study streak, and read-aloud.">وكمان: جلسات تركيز (بومودورو)، هدف يومي، أيام متتالية، وقراءة الملخص بصوت.</p>
+        </div>
+      </section>
+
+      <section class="section gallery-section" id="gallery">
+        <div class="wrap">
+          <p class="eyebrow reveal" data-en="Inside the app">من جوه التطبيق</p>
+          <h2 class="section-title reveal" data-en="Made to make studying easier">معمول عشان المذاكرة تبقى أسهل</h2>
+          <div class="gallery">
+            <figure class="shot reveal" style="--d: 0ms"><div class="phone"><img src="./landing/summary.jpg" alt="" loading="lazy" /></div><figcaption data-en="A clean summary, ready to revise">ملخص مرتب وجاهز للمراجعة</figcaption></figure>
+            <figure class="shot shot-mid reveal" style="--d: 120ms"><div class="phone"><img src="./landing/mindmap.jpg" alt="" loading="lazy" /></div><figcaption data-en="The whole lesson as a mind map">الدرس كله في خريطة ذهنية</figcaption></figure>
+            <figure class="shot reveal" style="--d: 240ms"><div class="phone"><img src="./landing/cards.jpg" alt="" loading="lazy" /></div><figcaption data-en="Flashcards that come back at the right time">بطاقات بترجعلك في الوقت الصح</figcaption></figure>
+          </div>
         </div>
       </section>
 
       <section class="section">
-        <div class="wrap showcase">
-          <div class="shot"><div class="phone"><img src="./landing/summary.jpg" alt="" loading="lazy" /></div><p data-en="A clean summary, ready to revise">ملخص مرتب وجاهز للمراجعة</p></div>
-          <div class="shot"><div class="phone"><img src="./landing/cards.jpg" alt="" loading="lazy" /></div><p data-en="Flashcards that come back at the right time">بطاقات بترجعلك في الوقت الصح</p></div>
-        </div>
-      </section>
-
-      <section class="section alt">
         <div class="wrap free">
-          <div>
+          <div class="reveal">
+            <p class="eyebrow start" data-en="Free">مجاني</p>
             <h2 class="section-title start" data-en="Free? Yes.">ببلاش؟ أيوه.</h2>
             <p class="lead" data-en="Zakerly runs on Google Gemini with a free key that you create once, in under a minute. The app walks you through it step by step, and the key stays on your phone.">
               ذاكرلي بيشتغل بـ Gemini من جوجل بمفتاح مجاني بتعمله مرة واحدة في أقل من دقيقة. التطبيق بيشرحلك الخطوات واحدة واحدة، والمفتاح بيفضل على موبايلك بس.
@@ -143,36 +157,38 @@
               <li data-en="No card, no payment">من غير كارت ولا دفع</li>
             </ul>
           </div>
-          <div class="install">
-            <h3 data-en="Put it on your home screen 📲">نزّله على الشاشة الرئيسية 📲</h3>
-            <p class="small muted" data-en="Open the app, then:">افتح التطبيق، وبعدين:</p>
-            <ol>
-              <li data-en="iPhone (Safari): Share ⬆️ → “Add to Home Screen”"><b>آيفون (Safari):</b> زرار المشاركة ⬆️ ← «إضافة إلى الشاشة الرئيسية»</li>
-              <li data-en="Android (Chrome): menu ⋮ → “Install app”"><b>أندرويد (Chrome):</b> القائمة ⋮ ← «تثبيت التطبيق»</li>
-              <li data-en="Opened from WhatsApp or Instagram? Open the link in Safari or Chrome first.">فاتح اللينك من واتساب أو إنستجرام؟ افتحه في Safari أو Chrome الأول.</li>
-            </ol>
+          <div class="card-glass reveal" style="--d: 120ms">
+            <img src="./icon-192.png" alt="" width="72" height="72" class="mini-icon" />
+            <h3 data-en="On your home screen, like any app">على شاشة موبايلك زي أي تطبيق</h3>
+            <p class="muted" data-en="Tap the button and we'll show you exactly how to install it on your phone — it takes 10 seconds.">دوس على الزرار، وهنوريك بالظبط إزاي تنزّله على موبايلك — في ١٠ ثواني.</p>
+            <a class="btn btn-primary open-app" href="./app/" data-en="Show me how">وريني إزاي</a>
           </div>
         </div>
       </section>
 
       <section class="section" id="faq">
         <div class="wrap narrow">
-          <h2 class="section-title" data-en="Questions">أسئلة بتتسأل كتير</h2>
-          <details><summary data-en="Is it really free?">هو مجاني بجد؟</summary><p data-en="Yes. You use a free Google Gemini key. Google gives free daily use that's enough for normal studying.">أيوه. بتستخدم مفتاح Gemini مجاني من جوجل، وجوجل بتدي استخدام يومي مجاني يكفي المذاكرة العادية.</p></details>
-          <details><summary data-en="Do I need to create an account?">محتاج أعمل حساب؟</summary><p data-en="No. Open the app and start right away.">لأ. افتح التطبيق وابدأ على طول.</p></details>
-          <details><summary data-en="Where are my materials saved?">موادي بتتحفظ فين؟</summary><p data-en="On your own device. Nobody else can see them.">على جهازك إنت، ومحدش غيرك يقدر يشوفها.</p></details>
-          <details><summary data-en="Does it understand Arabic?">بيفهم عربي؟</summary><p data-en="Yes. It reads Arabic and English, and answers in your material's language or the one you choose.">أيوه. بيقرا عربي وإنجليزي، وبيرد بلغة المادة أو باللغة اللي تختارها.</p></details>
-          <details><summary data-en="Can it read photos of book pages?">بيقرا صور صفحات الكتاب؟</summary><p data-en="Yes, including scanned PDFs, tables and handwriting.">أيوه، وكمان ملفات PDF المتصوّرة والجداول والخط اليدوي.</p></details>
-          <details><summary data-en="Is it in the App Store or Google Play?">موجود على App Store أو Google Play؟</summary><p data-en="No need. It's a web app: open the link and add it to your home screen, and it works like any app.">مش محتاج. ده تطبيق ويب: افتح اللينك وضيفه للشاشة الرئيسية، ويشتغل زي أي تطبيق.</p></details>
+          <p class="eyebrow reveal" data-en="FAQ">أسئلة</p>
+          <h2 class="section-title reveal" data-en="Questions">أسئلة بتتسأل كتير</h2>
+          <div class="faq reveal">
+            <details><summary data-en="Is it really free?">هو مجاني بجد؟</summary><p data-en="Yes. You use a free Google Gemini key. Google gives free daily use that's enough for normal studying.">أيوه. بتستخدم مفتاح Gemini مجاني من جوجل، وجوجل بتدي استخدام يومي مجاني يكفي المذاكرة العادية.</p></details>
+            <details><summary data-en="Do I need to create an account?">محتاج أعمل حساب؟</summary><p data-en="No. Open the app and start right away.">لأ. افتح التطبيق وابدأ على طول.</p></details>
+            <details><summary data-en="Where are my materials saved?">موادي بتتحفظ فين؟</summary><p data-en="On your own device. Nobody else can see them.">على جهازك إنت، ومحدش غيرك يقدر يشوفها.</p></details>
+            <details><summary data-en="Does it understand Arabic?">بيفهم عربي؟</summary><p data-en="Yes. It reads Arabic and English, and answers in your material's language or the one you choose.">أيوه. بيقرا عربي وإنجليزي، وبيرد بلغة المادة أو باللغة اللي تختارها.</p></details>
+            <details><summary data-en="Can it read photos of book pages?">بيقرا صور صفحات الكتاب؟</summary><p data-en="Yes, including scanned PDFs, tables and handwriting.">أيوه، وكمان ملفات PDF المتصوّرة والجداول والخط اليدوي.</p></details>
+            <details><summary data-en="Is it in the App Store or Google Play?">موجود على App Store أو Google Play؟</summary><p data-en="No need. It's a web app: install it from this page onto your home screen, and it works like any app.">مش محتاج. ده تطبيق ويب: بتنزّله من الصفحة دي على الشاشة الرئيسية، ويشتغل زي أي تطبيق.</p></details>
+          </div>
         </div>
       </section>
 
       <section class="final">
-        <div class="wrap final-box">
-          <img src="./icon-192.png" alt="" width="84" height="84" />
-          <h2 data-en="Ready for your next exam?">جاهز لامتحانك الجاي؟</h2>
-          <p data-en="Your first summary is a minute away.">أول ملخص ليك على بعد دقيقة.</p>
-          <a class="btn btn-light btn-lg" href="./app/" data-en="Open Zakerly">افتح ذاكرلي</a>
+        <div class="wrap">
+          <div class="final-box reveal">
+            <img src="./icon-192.png" alt="" width="88" height="88" />
+            <h2 data-en="Ready for your next exam?">جاهز لامتحانك الجاي؟</h2>
+            <p data-en="Your first summary is a minute away.">أول ملخص ليك على بعد دقيقة.</p>
+            <a class="btn btn-light btn-lg open-app" href="./app/" data-en="Get Zakerly">نزّل ذاكرلي</a>
+          </div>
         </div>
       </section>
     </main>
@@ -180,9 +196,27 @@
     <footer class="footer">
       <div class="wrap footer-row">
         <span data-en="© Zakerly — study smarter">© ذاكرلي — ذاكر أذكى</span>
-        <a href="./app/" data-en="Open the app">افتح التطبيق</a>
+        <a href="./app/" data-en="Open in the browser">افتحه من المتصفح</a>
       </div>
     </footer>
+
+    <!-- install guide: filled in by site.ts for the visitor's device -->
+    <div class="modal" id="install" hidden>
+      <div class="modal-back" data-close></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="install-title">
+        <button class="sheet-close" type="button" data-close aria-label="close">✕</button>
+        <div class="sheet-head">
+          <img src="./icon-192.png" alt="" width="64" height="64" />
+          <div>
+            <h2 id="install-title" data-en="Install Zakerly">نزّل ذاكرلي</h2>
+            <p class="small muted" id="install-sub"></p>
+          </div>
+        </div>
+        <div id="install-body"></div>
+        <a class="browser-link" href="./app/" data-en="Or open it in the browser without installing →">أو افتحه من المتصفح من غير تنزيل ←</a>
+      </div>
+      <div class="point-down" id="point-down" hidden aria-hidden="true">⬇</div>
+    </div>
 
     <script type="module" src="/src/site/site.ts"></script>
   </body>
