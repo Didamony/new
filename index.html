@@ -11,7 +11,12 @@
     <meta property="og:description" content="لخّص، اسأل، واختبر نفسك من أي كتاب أو صورة. مجاني للطلبة." />
     <meta property="og:image" content="./icon-512.png" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <!-- ?v= forces iPhones to fetch the icon again instead of reusing an old failed attempt -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=3" />
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./apple-touch-icon.png?v=3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ذاكرلي" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
