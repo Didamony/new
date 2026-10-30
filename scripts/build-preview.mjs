@@ -20,7 +20,7 @@ const clean = (s) => s.replace(/\x1b/g, "\\x1b").replace(/�/g, "\\uFFFD");
 const css = read(".css");
 const js = clean(read(".js")).replace(/<\/script/gi, "<\\/script");
 const icon = readFileSync("public/icon.svg", "utf8");
-const html = readFileSync(join(outDir, "index.html"), "utf8");
+const html = readFileSync(join(outDir, "app", "index.html"), "utf8"); // the app page lives in /app/
 const themeScript = html.match(/<script>\s*try \{[\s\S]*?<\/script>/)[0];
 
 const page = `<title>ذاكرلي</title>
